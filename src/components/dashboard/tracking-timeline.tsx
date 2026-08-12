@@ -6,6 +6,7 @@ import type { ShipmentStatus, TrackingHistoryEntry } from "@/lib/types";
 const DOT_COLORS: Record<ShipmentStatus, string> = {
   pending: "bg-amber-500",
   in_transit: "bg-sky-500",
+  out_for_delivery: "bg-orange-500",
   customs: "bg-violet-500",
   delivered: "bg-emerald-500",
   cancelled: "bg-red-500",

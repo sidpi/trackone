@@ -19,8 +19,9 @@ their own rows.
 | `created_at`      | `timestamptz` | default `now()`                                |
 | `updated_at`      | `timestamptz` | auto-updated by trigger                        |
 
-Allowed statuses: `pending`, `in_transit`, `customs`, `delivered`,
-`cancelled`.
+Allowed statuses: `pending`, `in_transit`, `out_for_delivery`, `customs`,
+`delivered`, `cancelled`. (`out_for_delivery` was added by
+`0003_out_for_delivery.sql`.)
 
 ## 0002_tracking.sql — tracking history + cache (Track 3)
 
@@ -42,7 +43,14 @@ shipment owner via a join on `shipments.user_id`:
 | `raw`        | `jsonb`       | raw provider payload                   |
 | `created_at` | `timestamptz` | default `now()`                        |
 
-To run both:
+## 0003_out_for_delivery.sql — distinct "out for delivery" status
+
+Adds `out_for_delivery` to the `shipments.status` check constraint (it was
+previously folded into `in_transit`) and backfills any existing shipments
+whose cached provider payload already reports the parcel as out for
+delivery. Run after `0002_tracking.sql`.
+
+To run all migrations:
 
 ```bash
 # Option A — Supabase CLI
@@ -51,4 +59,5 @@ supabase db push
 # Option B — Dashboard
 # Supabase → SQL Editor → paste 0001_shipments.sql → Run
 # → paste 0002_tracking.sql → Run
+# → paste 0003_out_for_delivery.sql → Run
 ```

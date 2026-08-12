@@ -70,7 +70,7 @@ const TAG_TO_STATUS: Record<string, ShipmentStatus> = {
   pending: "pending",
   inforeceived: "pending",
   intransit: "in_transit",
-  outfordelivery: "in_transit",
+  outfordelivery: "out_for_delivery",
   availableforpickup: "in_transit",
   customs: "customs",
   delivered: "delivered",

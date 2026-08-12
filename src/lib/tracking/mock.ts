@@ -50,6 +50,14 @@ export const mockProvider: TrackingProvider = {
         location: hub,
       });
     }
+    if (ageDays >= 4) {
+      checkpoints.push({
+        occurredAt: new Date(created + 4 * 86_400_000).toISOString(),
+        tag: "outfordelivery",
+        message: "Out for delivery — with the delivery agent",
+        location: hub,
+      });
+    }
     if (ageDays >= 5) {
       checkpoints.push({
         occurredAt: new Date(created + 5 * 86_400_000).toISOString(),

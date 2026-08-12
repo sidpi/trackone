@@ -3,6 +3,7 @@
 export const SHIPMENT_STATUSES = [
   "pending",
   "in_transit",
+  "out_for_delivery",
   "customs",
   "delivered",
   "cancelled",

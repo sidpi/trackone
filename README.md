@@ -160,7 +160,8 @@ the file and function (`middleware` → `proxy`) — no other changes needed.
 ├── sql/                         # Postgres migrations
 │   ├── README.md
 │   ├── 0001_shipments.sql       # shipments table + RLS (Track 2)
-│   └── 0002_tracking.sql        # history table + cache cols (Track 3)
+│   ├── 0002_tracking.sql        # history table + cache cols (Track 3)
+│   └── 0003_out_for_delivery.sql # distinct "out for delivery" status
 ├── public/_headers              # Static asset caching (Cloudflare)
 ├── wrangler.jsonc               # OpenNext / Wrangler config
 ├── .env.example                 # Documented env vars
@@ -262,7 +263,8 @@ GitHub → Cloudflare CI path instead.
 - `sql/0001_shipments.sql` — the `shipments` table with RLS policies; run it
   from the Supabase **SQL Editor** or `supabase db push`. See `sql/README.md`.
 - Dashboard lists the signed-in user's shipments (RLS-scoped), with status
-  badges (`pending`, `in_transit`, `customs`, `delivered`, `cancelled`).
+  badges (`pending`, `in_transit`, `out_for_delivery`, `customs`,
+  `delivered`, `cancelled`).
 - **Add Shipment** opens a modal: tracking number, courier dropdown, optional
   nickname. **Edit** also allows changing the status. **Delete** removes a row.
 - All mutations run through server actions in `src/app/dashboard/actions.ts`
@@ -271,7 +273,9 @@ GitHub → Cloudflare CI path instead.
 
 ## Track 3 — Courier tracking (live)
 
-- Run `sql/0002_tracking.sql` after `0001` (history table + cache columns).
+- Run `sql/0002_tracking.sql` after `0001` (history table + cache columns),
+  then `sql/0003_out_for_delivery.sql` (adds the distinct
+  `out_for_delivery` status).
 - Click any shipment row → **details page** with a tracking timeline.
   **Refresh tracking** calls `POST /api/tracking/refresh`.
 - That route is a secure serverless function: it only refreshes shipments

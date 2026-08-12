@@ -167,7 +167,7 @@ export function ShipmentDialog({
                 <SelectContent>
                   {SHIPMENT_STATUSES.map((s) => (
                     <SelectItem key={s} value={s}>
-                      {s.charAt(0).toUpperCase() + s.slice(1).replace("_", " ")}
+                      {s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, " ")}
                     </SelectItem>
                   ))}
                 </SelectContent>
