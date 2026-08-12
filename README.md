@@ -1,15 +1,16 @@
 # ShipTrack — Shipment Tracking App
 
 **Track 1:** polished landing page + working login + protected dashboard shell.
+**Track 2:** full shipments CRUD — create, edit, delete, and status badges,
+with per-user Row Level Security.
 
 A Next.js (App Router) web app for tracking shipments, built with TypeScript,
 Tailwind CSS, shadcn/ui, and Supabase (Auth + Postgres). Deployed to
 **Cloudflare** via the OpenNext adapter, behind the custom domain
 **`track.sidcandev.online`** (a subdomain of `sidcandev.online`).
 
-> Shipment APIs are intentionally **not** built yet — that's Track 2. This
-> milestone covers the landing page, authentication, and an empty dashboard
-> with a placeholder "Add Shipment" button.
+> Courier tracking APIs are intentionally **not** built yet — that's Track 3.
+> Shipments are stored locally in Postgres with manual status updates.
 
 ---
 
@@ -97,7 +98,7 @@ on the protected dashboard.
 | --------------------- | -------------------------------------------------------- |
 | `/`                   | Landing page (hero, features, roadmap, CTA)              |
 | `/login`              | Sign-in page (Supabase email + password)                 |
-| `/dashboard`          | Protected blank dashboard with placeholder **Add Shipment** |
+| `/dashboard`          | Protected dashboard: shipments list, status badges, create/edit/delete |
 | `/auth/callback`      | OAuth/magic-link code exchange (ready for future providers) |
 | `/auth/signout`       | POST route that signs the user out                       |
 
@@ -130,7 +131,8 @@ the file and function (`middleware` → `proxy`) — no other changes needed.
 │   │   ├── login/page.tsx       # Sign-in page
 │   │   ├── dashboard/           # Protected area
 │   │   │   ├── layout.tsx       # Auth guard + app shell
-│   │   │   └── page.tsx         # Blank dashboard + Add Shipment
+│   │   │   ├── page.tsx         # Fetches shipments (RLS), renders list
+│   │   │   └── actions.ts       # Server actions: create/update/delete
 │   │   └── auth/                # Auth route handlers
 │   │       ├── callback/route.ts
 │   │       └── signout/route.ts
@@ -138,12 +140,17 @@ the file and function (`middleware` → `proxy`) — no other changes needed.
 │   │   ├── ui/                  # shadcn/ui components (generated)
 │   │   ├── landing/             # Landing page sections
 │   │   ├── auth/                # Login form
-│   │   └── dashboard/           # Header, user menu, Add Shipment
+│   │   └── dashboard/           # Shipment dialog, table, status badge,
+│   │                            # row actions, header, user menu
 │   ├── lib/
 │   │   ├── utils.ts             # cn() helper
+│   │   ├── types.ts             # Shipment types + statuses
+│   │   ├── couriers.ts          # Static courier list (no API yet)
 │   │   └── supabase/            # client.ts, server.ts
 │   └── middleware.ts            # Session refresh + route guard (Edge)
-├── sql/                         # Postgres schema (Track 2: shipments table)
+├── sql/                         # Postgres migrations
+│   ├── README.md
+│   └── 0001_shipments.sql       # shipments table + RLS (Track 2)
 ├── public/_headers              # Static asset caching (Cloudflare)
 ├── wrangler.jsonc               # OpenNext / Wrangler config
 ├── .env.example                 # Documented env vars
@@ -234,11 +241,24 @@ GitHub → Cloudflare CI path instead.
 
 ---
 
+## Track 2 — Shipments (live)
+
+- `sql/0001_shipments.sql` — the `shipments` table with RLS policies; run it
+  from the Supabase **SQL Editor** or `supabase db push`. See `sql/README.md`.
+- Dashboard lists the signed-in user's shipments (RLS-scoped), with status
+  badges (`pending`, `in_transit`, `customs`, `delivered`, `cancelled`).
+- **Add Shipment** opens a modal: tracking number, courier dropdown, optional
+  nickname. **Edit** also allows changing the status. **Delete** removes a row.
+- All mutations run through server actions in `src/app/dashboard/actions.ts`
+  with input validation; the `user_id` is always set from the session, so a
+  user can never create rows for someone else.
+- Couriers are a static list in `src/lib/couriers.ts` — no courier API yet.
+
 ## Roadmap
 
-- **Track 1 (this release)** — Landing page, Supabase auth, dashboard shell.
-- **Track 2** — Shipments CRUD (`sql/schema.sql`), statuses, team permissions.
-- **Track 3** — Live tracking, notifications, analytics.
+- **Track 1 (done)** — Landing page, Supabase auth, dashboard shell.
+- **Track 2 (done)** — Shipments CRUD, status badges, RLS.
+- **Track 3 (planned)** — Live courier tracking, notifications, analytics.
 
 ---
 

@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, CircleDashed } from "lucide-react";
+import { CheckCircle2, Circle } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,14 +21,14 @@ const tracks = [
     ],
   },
   {
-    icon: CircleDashed,
+    icon: CheckCircle2,
     title: "Track 2 — Shipments",
-    status: "Planned",
-    tone: "secondary" as const,
+    status: "Live now",
+    tone: "default" as const,
     points: [
-      "Create, edit & list shipments",
-      "Status workflow engine",
-      "Team permissions",
+      "Create, edit & delete shipments",
+      "Status tracking with badges",
+      "Private per user (RLS)",
     ],
   },
   {
@@ -37,7 +37,7 @@ const tracks = [
     status: "Planned",
     tone: "outline" as const,
     points: [
-      "Live status updates",
+      "Live courier status updates",
       "Email notifications",
       "Analytics & reporting",
     ],
@@ -54,8 +54,8 @@ export function Roadmap() {
             Built in tracks, shipped incrementally
           </h2>
           <p className="mt-4 text-muted-foreground">
-            This release covers Track 1. Shipment APIs arrive in Track 2 — the
-            dashboard is already wired up and waiting.
+            Track 1 and 2 are live — sign in, add shipments, and track their
+            status. Live courier tracking arrives in Track 3.
           </p>
         </div>
 

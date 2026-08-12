@@ -1,23 +1,36 @@
 # SQL migrations
 
-Reserved for **Track 2** — the Postgres schema for shipments.
+Apply migrations in order with the Supabase CLI (`supabase db push`) or
+manually from the Dashboard → **SQL Editor**.
 
-Run migrations with `supabase db push` (Supabase CLI) or from the Supabase
-Dashboard → SQL Editor.
+## 0001_shipments.sql — shipments table (Track 2)
 
-Draft for later (not applied yet):
+Creates `public.shipments` with Row Level Security so every user only sees
+their own rows.
 
-```sql
--- create table shipments (
---   id uuid primary key default gen_random_uuid(),
---   owner_id uuid not null references auth.users(id) on delete cascade,
---   tracking_number text not null,
---   origin text,
---   destination text,
---   status text not null default 'pending',
---   created_at timestamptz not null default now(),
---   updated_at timestamptz not null default now()
--- );
---
--- alter table shipments enable row level security;
+| Column          | Type        | Notes                                        |
+| --------------- | ----------- | -------------------------------------------- |
+| `id`            | `uuid`      | PK, default `gen_random_uuid()`              |
+| `user_id`       | `uuid`      | FK → `auth.users(id)`, cascades on delete    |
+| `tracking_number` | `text`    | required                                     |
+| `courier`       | `text`      | required (DHL, FedEx, UPS, …)                |
+| `nickname`      | `text`      | optional, nullable                           |
+| `status`        | `text`      | default `'pending'`; check-constrained       |
+| `created_at`    | `timestamptz` | default `now()`                            |
+| `updated_at`    | `timestamptz` | auto-updated by trigger                    |
+
+Allowed statuses: `pending`, `in_transit`, `customs`, `delivered`,
+`cancelled`.
+
+RLS policies: `select` / `insert` / `update` / `delete` each scoped to
+`auth.uid() = user_id`.
+
+To run it:
+
+```bash
+# Option A — Supabase CLI
+supabase db push
+
+# Option B — Dashboard
+# Supabase → SQL Editor → paste the contents of 0001_shipments.sql → Run
 ```

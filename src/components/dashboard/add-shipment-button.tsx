@@ -1,22 +1,19 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ShipmentDialog } from "@/components/dashboard/shipment-dialog";
 
 export function AddShipmentButton() {
   return (
-    <Button
-      onClick={() =>
-        toast.info("Coming in Track 2", {
-          description:
-            "Shipment creation is next on the roadmap. This button is a placeholder for now.",
-        })
+    <ShipmentDialog
+      trigger={
+        <Button>
+          <Plus data-icon="inline-start" />
+          Add Shipment
+        </Button>
       }
-    >
-      <Plus data-icon="inline-start" />
-      Add Shipment
-    </Button>
+    />
   );
 }

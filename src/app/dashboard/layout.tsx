@@ -29,8 +29,8 @@ export default async function DashboardLayout({
       </main>
       <footer className="border-t py-6">
         <p className="text-center text-xs text-muted-foreground">
-          ShipTrack · Track 1 — dashboard shell only, shipment APIs arrive in
-          Track 2
+          ShipTrack · Track 2 — shipments CRUD live · courier tracking API
+          coming in Track 3
         </p>
       </footer>
     </div>

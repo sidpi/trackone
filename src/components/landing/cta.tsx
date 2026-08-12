@@ -19,8 +19,8 @@ export function Cta() {
             Ready to move your first shipment?
           </h2>
           <p className="mx-auto mt-4 max-w-md text-muted-foreground">
-            Sign in and step into your dashboard. Track 2 adds the full
-            shipment workflow next.
+            Sign in and manage your shipments — add them, update their status,
+            and keep everything in one place.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button size="lg" className="w-full sm:w-auto" render={<Link href="/login?next=/dashboard" />}>

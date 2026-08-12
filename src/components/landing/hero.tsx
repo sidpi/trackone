@@ -55,7 +55,7 @@ export function Hero() {
         <div className="mx-auto max-w-3xl text-center">
           <Badge variant="secondary" className="mb-6 gap-1.5">
             <Ship className="size-3" />
-            Track 1 · MVP live
+            Track 2 · Shipments live
           </Badge>
 
           <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
