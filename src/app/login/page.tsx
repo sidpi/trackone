@@ -30,9 +30,10 @@ export default async function LoginPage() {
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 pb-16">
         <Card className="w-full">
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">Welcome back</CardTitle>
+            <CardTitle className="text-xl">Sign in</CardTitle>
             <CardDescription>
-              Sign in to continue to your dashboard.
+              Enter your email and we&apos;ll send you a secure verification
+              code — no password needed.
             </CardDescription>
           </CardHeader>
           <CardContent>

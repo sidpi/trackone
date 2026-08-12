@@ -21,7 +21,7 @@ Tailwind CSS, shadcn/ui, and Supabase (Auth + Postgres). Deployed to
 | ---------- | ------------------------------------------------------------- |
 | Framework  | Next.js 16 (App Router, React 19, TypeScript)                 |
 | Styling    | Tailwind CSS v4 + shadcn/ui (Base UI components)              |
-| Auth       | Supabase Auth via `@supabase/ssr` (email + password)          |
+| Auth       | Supabase Auth via `@supabase/ssr` (email OTP / magic link)    |
 | Database   | PostgreSQL hosted on Supabase (RLS-ready, schema in `sql/`)   |
 | Hosting    | Cloudflare (Workers runtime) via `@opennextjs/cloudflare`     |
 | Domain     | `track.sidcandev.online`                                     |
@@ -75,8 +75,11 @@ cp .dev.vars.example .dev.vars
    NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
    ```
 
-5. Create your first user: **Authentication → Users → Add user** (email +
-   password). Sign-ups can be enabled later under **Auth → Providers**.
+5. **Authentication is public by default**: **Auth → Providers → Email**
+   must be enabled, with **"Enable email signups"** on. Anyone who visits
+   the site can create an account with their email — no passwords involved.
+   Sign-in uses **email OTP / magic link**: the user enters their email,
+   receives a 6-digit code, and is signed in.
 
 > Using the Supabase CLI locally instead? Run `supabase start` and point
 > `NEXT_PUBLIC_SUPABASE_URL` at `http://127.0.0.1:54321` (anon key is
@@ -88,8 +91,9 @@ cp .dev.vars.example .dev.vars
 npm run dev
 ```
 
-Open http://localhost:3000. Sign in with the user you created — you'll land
-on the protected dashboard.
+Open http://localhost:3000 → **Sign in** → enter any email → enter the
+6-digit code from the inbox. New users are created automatically; returning
+users land back on their existing dashboard.
 
 ---
 
@@ -98,7 +102,7 @@ on the protected dashboard.
 | Route                 | Description                                              |
 | --------------------- | -------------------------------------------------------- |
 | `/`                   | Landing page (hero, features, roadmap, CTA)              |
-| `/login`              | Sign-in page (Supabase email + password)                 |
+| `/login`              | Sign-in page (Supabase email OTP / magic link)           |
 | `/dashboard`          | Protected dashboard: unified shipment list, filters, Sync Now, create/edit/delete |
 | `/dashboard/shipments/[id]` | Shipment details: tracking timeline, refresh, error states |
 | `/dashboard/settings` | Settings: connected email accounts (sync, disconnect)   |
@@ -264,8 +268,32 @@ push to the production branch. Keep secrets in the Worker's
 
 ### 5. Update Supabase URL configuration
 
-Add `https://track.sidcandev.online` to **Authentication → URL Configuration**
-(redirect URLs) in Supabase so auth callbacks resolve correctly.
+In Supabase → **Authentication → URL Configuration**:
+
+- **Site URL**: `https://track.sidcandev.online` (production) — or
+  `http://localhost:3000` while developing.
+- **Redirect URLs**: add `https://track.sidcandev.online/**` and
+  `http://localhost:3000/**` so the magic-link callback and the email
+  connection flow resolve on both environments.
+- **Email OTP settings**: under **Auth → Providers → Email** confirm
+  "Enable email signups" is on and "Confirm email" is enabled (this is
+  what makes the OTP/magic-link flow secure).
+
+### 6. Production authentication — public sign-up flow
+
+Anyone can create an account — no password, ever:
+
+1. Visit `https://track.sidcandev.online` → **Sign in**.
+2. Enter an email → **Send code**.
+3. A 6-digit code arrives by email (the email also contains a one-click
+   sign-in link that resolves through `/auth/callback`).
+4. Enter the code → **Verify & sign in** → redirected to the dashboard.
+   New users are created automatically; returning users keep their
+   shipments, connected emails, and settings.
+
+Sessions persist via Supabase cookies (`@supabase/ssr`) and are refreshed
+by the Edge middleware; the dashboard and every API route validate the
+session server-side, and Postgres RLS keeps each user's data isolated.
 
 ### Windows note
 
@@ -457,8 +485,12 @@ join the same list.
 
 ## Common issues
 
-- **"Invalid login credentials"** — wrong email/password, or the user was
-  created with a different auth provider. Check **Auth → Users**.
+- **Code never arrives / "Email not confirmed"** — check **Auth →
+  Providers → Email** and **Auth → URL Configuration**; confirm the email
+  provider is enabled and the redirect URLs include your site. OTP codes
+  expire, so use **Resend code** to get a fresh one.
+- **"For security purposes…" on send/verify** — Supabase rate-limits OTP
+  requests; wait a minute and try again.
 - **Session not persisting after deploy** — make sure `NEXT_PUBLIC_SUPABASE_URL`
   is set as a Worker variable *and* in the build environment, and that
   `https://track.sidcandev.online` is in Supabase's allowed redirect URLs.

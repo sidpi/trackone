@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Auth callback — exchanges the OAuth / magic-link `code` for a session.
- * Required for any provider besides email+password (Google, GitHub, etc.).
+ * Auth callback — exchanges the magic-link / OTP `code` for a session.
+ * The OTP email contains both a 6-digit code (typed into /login) and a
+ * "Sign in" link that lands here.
  */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
