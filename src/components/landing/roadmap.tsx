@@ -42,6 +42,17 @@ const tracks = [
       "Caching & error handling",
     ],
   },
+  {
+    icon: CheckCircle2,
+    title: "Track 4 — Auto-discovery",
+    status: "Live now",
+    tone: "default" as const,
+    points: [
+      "Connect multiple email accounts (OAuth)",
+      "Shipments discovered from order emails",
+      "Duplicate-safe unified dashboard",
+    ],
+  },
 ];
 
 export function Roadmap() {
@@ -54,12 +65,12 @@ export function Roadmap() {
             Built in tracks, shipped incrementally
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Tracks 1–3 are live — add shipments, refresh tracking, and follow
-            the timeline. Automatic shipment discovery is next.
+            Tracks 1–4 are live — add shipments manually or connect your email
+            accounts and let tracking numbers be discovered automatically.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-4 md:grid-cols-3">
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {tracks.map(({ icon: Icon, title, status, tone, points }) => (
             <Card key={title} className="gap-3">
               <CardHeader>

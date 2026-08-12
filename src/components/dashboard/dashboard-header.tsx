@@ -19,9 +19,15 @@ export function DashboardHeader({
           <nav className="hidden items-center gap-1 text-sm sm:flex">
             <Link
               href="/dashboard"
-              className="rounded-md bg-primary/10 px-3 py-1.5 font-medium text-foreground"
+              className="rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:text-foreground"
             >
               Shipments
+            </Link>
+            <Link
+              href="/dashboard/settings"
+              className="rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Settings
             </Link>
           </nav>
         </div>

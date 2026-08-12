@@ -18,6 +18,14 @@ export interface Shipment {
   courier: string;
   nickname: string | null;
   status: ShipmentStatus;
+  /** How this shipment got into the app: "manual" or "email" (Track 4). */
+  source: "manual" | "email";
+  /** Connected email that discovered it (email-sourced only). */
+  source_email: string | null;
+  /** Merchant / marketplace, e.g. "Amazon" (email-sourced only). */
+  merchant: string | null;
+  /** Estimated delivery date when extracted from email. */
+  estimated_delivery: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -52,3 +60,14 @@ export type ShipmentWithTracking = Shipment & {
   tracking_error: string | null;
   tracking_raw: unknown | null;
 };
+
+/** One connected email account (sql/0004_email_discovery.sql). */
+export interface ConnectedEmail {
+  id: string;
+  email: string;
+  provider: string;
+  status: "connected" | "error" | "revoked";
+  last_sync_at: string | null;
+  last_sync_error: string | null;
+  created_at: string;
+}

@@ -166,6 +166,28 @@ export default async function ShipmentDetailsPage({
                 <dt className="text-muted-foreground">Courier</dt>
                 <dd>{shipment.courier}</dd>
               </div>
+              {shipment.merchant && (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Merchant</dt>
+                  <dd>{shipment.merchant}</dd>
+                </div>
+              )}
+              {shipment.estimated_delivery && (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Estimated delivery</dt>
+                  <dd>{formatDate(shipment.estimated_delivery)}</dd>
+                </div>
+              )}
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Source</dt>
+                <dd className="text-right">
+                  {shipment.source === "email"
+                    ? shipment.source_email
+                      ? `Email · ${shipment.source_email}`
+                      : "Email"
+                    : "Added manually"}
+                </dd>
+              </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-muted-foreground">Created</dt>
                 <dd>{formatDateTime(shipment.created_at)}</dd>

@@ -36,10 +36,22 @@ function ShipmentRow({ shipment }: { shipment: Shipment }) {
             <p className="truncate font-mono text-xs text-muted-foreground">
               {shipment.tracking_number}
             </p>
+            {shipment.merchant && (
+              <p className="truncate text-xs text-muted-foreground/80">
+                {shipment.merchant}
+              </p>
+            )}
           </div>
         </Link>
       </td>
-      <td className="px-4 py-3 text-muted-foreground">{shipment.courier}</td>
+      <td className="px-4 py-3 text-muted-foreground">
+        <span className="block">{shipment.courier}</span>
+        {shipment.source === "email" && shipment.source_email && (
+          <span className="block text-xs text-muted-foreground/70">
+            via {shipment.source_email}
+          </span>
+        )}
+      </td>
       <td className="px-4 py-3">
         <ShipmentStatusBadge status={shipment.status} />
       </td>

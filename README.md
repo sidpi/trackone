@@ -5,14 +5,13 @@
 with per-user Row Level Security.
 **Track 3:** courier tracking — TrackCourier.io + Ship24 integration with a
 status timeline, caching, and error handling.
+**Track 4:** automatic shipment discovery — connect multiple email accounts
+(OAuth) and shipments are extracted from order emails automatically.
 
 A Next.js (App Router) web app for tracking shipments, built with TypeScript,
 Tailwind CSS, shadcn/ui, and Supabase (Auth + Postgres). Deployed to
 **Cloudflare** via the OpenNext adapter, behind the custom domain
 **`track.sidcandev.online`** (a subdomain of `sidcandev.online`).
-
-> Track 4 (automatic shipment discovery — email/SMS parsing) is the next
-> milestone and is **not** built yet.
 
 ---
 
@@ -100,9 +99,14 @@ on the protected dashboard.
 | --------------------- | -------------------------------------------------------- |
 | `/`                   | Landing page (hero, features, roadmap, CTA)              |
 | `/login`              | Sign-in page (Supabase email + password)                 |
-| `/dashboard`          | Protected dashboard: shipments list, status badges, create/edit/delete |
+| `/dashboard`          | Protected dashboard: unified shipment list, filters, Sync Now, create/edit/delete |
 | `/dashboard/shipments/[id]` | Shipment details: tracking timeline, refresh, error states |
+| `/dashboard/settings` | Settings: connected email accounts (sync, disconnect)   |
 | `/api/tracking/refresh`    | Secure serverless fn: fetches courier status, updates history |
+| `/api/emails/connect`      | Starts Google OAuth for connecting an email account     |
+| `/api/emails/callback`     | OAuth callback: stores encrypted token, saves connection |
+| `/api/emails/sync`         | Syncs one or all connected emails (also cron entry point) |
+| `/api/emails/disconnect`   | Disconnects an email (keeps discovered shipments)       |
 | `/auth/callback`      | OAuth/magic-link code exchange (ready for future providers) |
 | `/auth/signout`       | POST route that signs the user out                       |
 
@@ -137,7 +141,9 @@ the file and function (`middleware` → `proxy`) — no other changes needed.
 │   │   │   ├── layout.tsx       # Auth guard + app shell
 │   │   │   ├── page.tsx         # Fetches shipments (RLS), renders list
 │   │   │   ├── actions.ts       # Server actions: create/update/delete
-│   │   │   └── shipments/[id]/  # Details page + tracking timeline
+│   │   │   ├── settings/        # Connected Emails settings page
+│   │   └── shipments/[id]/  # Details page + tracking timeline
+│   │   ├── api/emails/      # connect / callback / sync / disconnect
 │   │   ├── api/tracking/refresh/route.ts  # Serverless tracking refresher
 │   │   └── auth/                # Auth route handlers
 │   │       ├── callback/route.ts
@@ -155,13 +161,20 @@ the file and function (`middleware` → `proxy`) — no other changes needed.
 │   │   ├── couriers.ts          # Courier list (slugs live in providers)
 │   │   ├── tracking/            # Providers (types, index, infer, mock,
 │   │   │                        # trackcourier.ts, ship24.ts)
+│   │   ├── emails/              # Email discovery (Track 4): OAuth, Gmail
+│   │   │   │                    # client, encryption, sync engine, and the
+│   │   │   └── parsers/         # modular parsers (Amazon, Flipkart, …)
+│   │   ├── emails/              # Email discovery (Track 4): OAuth flow,
+│   │   │   │                    # Gmail client, encryption, sync engine,
+│   │   │   └── parsers/         # modular parsers (Amazon, Flipkart, …)
 │   │   └── supabase/            # client.ts, server.ts
 │   └── middleware.ts            # Session refresh + route guard (Edge)
 ├── sql/                         # Postgres migrations
 │   ├── README.md
 │   ├── 0001_shipments.sql       # shipments table + RLS (Track 2)
 │   ├── 0002_tracking.sql        # history table + cache cols (Track 3)
-│   └── 0003_out_for_delivery.sql # distinct "out for delivery" status
+│   ├── 0003_out_for_delivery.sql # distinct "out for delivery" status
+│   └── 0004_email_discovery.sql # connected emails + source cols (Track 4)
 ├── public/_headers              # Static asset caching (Cloudflare)
 ├── wrangler.jsonc               # OpenNext / Wrangler config
 ├── .env.example                 # Documented env vars
@@ -232,6 +245,9 @@ In the Worker dashboard → **Settings → Variables and Secrets**:
 | `SHIP24_API_KEY`               | Secret  | your Ship24 API key                         |
 | `INDIAN_COURIER_API_URL`       | Text    | URL of your hosted indian-courier-api service |
 | `TRACKING_CACHE_TTL_MINUTES`   | Text    | `15` (optional)                             |
+| `GOOGLE_OAUTH_CLIENT_ID`       | Text    | Google OAuth client id (email discovery)    |
+| `GOOGLE_OAUTH_CLIENT_SECRET`   | Secret  | Google OAuth client secret                  |
+| `EMAIL_TOKEN_ENCRYPTION_KEY`   | Secret  | 32-byte base64 key to encrypt tokens        |
 
 `NEXT_PUBLIC_*` values are also inlined at **build** time — if you build in
 CI, set them there too. Provider keys are **runtime secrets**: store them as
@@ -342,8 +358,94 @@ format as the other providers.
 - **Track 1 (done)** — Landing page, Supabase auth, dashboard shell.
 - **Track 2 (done)** — Shipments CRUD, status badges, RLS.
 - **Track 3 (done)** — Courier tracking (TrackCourier + Ship24), timeline, caching.
-- **Track 4 (planned)** — Automatic shipment discovery: parse tracking
-  numbers from forwarded emails/SMS so nothing needs manual entry.
+- **Track 4 (done)** — Automatic shipment discovery from connected emails.
+
+---
+
+## Track 4 — Automatic email discovery (live)
+
+Connect one or more email accounts (Gmail via Google OAuth) and the app
+finds shipment/order emails, extracts tracking numbers, and adds them to the
+same dashboard as your manual shipments.
+
+### 1. Run the migration
+
+Run `sql/0004_email_discovery.sql` in Supabase → SQL Editor (after 0001–0003).
+It adds `source` / `source_email` / `merchant` / `estimated_delivery` to
+`shipments`, a per-user tracking-number uniqueness index, and the
+`connected_emails` table (encrypted token storage + RLS).
+
+### 2. Set up Google OAuth
+
+1. [Google Cloud Console](https://console.cloud.google.com) → create a
+   project (or pick one) → **APIs & Services → Library** → enable the
+   **Gmail API**.
+2. **APIs & Services → OAuth consent screen** → External → add your email
+   as a test user.
+3. **Credentials → Create credentials → OAuth client ID → Web application**.
+   Add an authorized redirect URI:
+   - Local: `http://localhost:3000/api/emails/callback`
+   - Production: `https://track.sidcandev.online/api/emails/callback`
+4. Copy the client ID/secret into `.env.local` (and Worker secrets):
+   `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`.
+5. Generate an encryption key and set `EMAIL_TOKEN_ENCRYPTION_KEY`:
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+   ```
+
+### 3. Connect an email
+
+**Dashboard → Settings → Connected Emails → Connect another email**.
+You'll be taken to Google's consent screen (Gmail read-only scope). The app
+never asks for your password and never stores email content — only the
+refreshed tracking facts. Each connected account has its own **Sync Now**,
+**Last synced** time, and **Disconnect**.
+
+### 4. How discovery works
+
+1. **Scan** — the sync queries recent Gmail (`newer_than:90d` + shipment
+   keywords). Only cheap headers (subject + from) are fetched for filtering.
+2. **Parse** — modular parsers in `src/lib/emails/parsers/` (Amazon,
+   Flipkart, Myntra, Meesho + generic courier notifications) detect the
+   merchant/courier and extract the tracking/AWB number, estimated delivery
+   and status. Adding a merchant = one new parser file registered in
+   `parsers/index.ts`.
+3. **Dedupe** — a tracking number that already exists for the user (added
+   manually or discovered earlier) is **associated** with the existing
+   shipment (`source_email` is set), never duplicated. The DB also enforces
+   a per-user unique index as a safety net.
+4. **Create** — new shipments get `source = 'email'`, the discovering email
+   in `source_email`, the merchant, and an estimated delivery when found.
+   Refresh tracking works exactly like manual shipments.
+
+### 5. Security model
+
+- Google **OAuth** only — passwords are never requested.
+- The **refresh token is encrypted at rest** (AES-256-GCM, key in
+  `EMAIL_TOKEN_ENCRYPTION_KEY`); access tokens live only in memory during a
+  sync. Tokens are never sent to the browser.
+- **RLS** on `connected_emails` and `shipments` keeps every user's data
+  private. `refresh_token_encrypted` is never selected by the UI.
+- Disconnecting revokes the Google token (best effort) and deletes the
+  connection row — **existing discovered shipments are kept**.
+- Minimal data: email bodies are parsed in memory and discarded; only
+  tracking facts are stored.
+
+### 6. Background sync (Cloudflare-ready)
+
+Sync is idempotent and lives in a plain function
+(`syncAllConnectedEmails` in `src/lib/emails/sync.ts`) that `POST
+/api/emails/sync` calls without an `emailId` to sync every connected
+account. To add scheduled sync later, point a Cloudflare **Cron Trigger**
+at that endpoint (protect it with a service token) — no code changes
+needed in the sync engine.
+
+### 7. Manual flow is unchanged
+
+The **Add Shipment** button, manual create/edit/delete, status badges, and
+refresh tracking all work exactly as before. Discovered shipments simply
+join the same list.
 
 ---
 

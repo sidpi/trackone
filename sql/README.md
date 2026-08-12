@@ -50,6 +50,32 @@ previously folded into `in_transit`) and backfills any existing shipments
 whose cached provider payload already reports the parcel as out for
 delivery. Run after `0002_tracking.sql`.
 
+## 0004_email_discovery.sql — connected emails + discovery source (Track 4)
+
+Adds to `shipments`: `source` (`manual`/`email`, default `manual`),
+`source_email`, `merchant`, `estimated_delivery`, plus a per-user unique
+index on `upper(trim(tracking_number))` (duplicate protection).
+
+Creates `public.connected_emails` (one row per connected email account):
+
+| Column                   | Type          | Notes                                         |
+| ------------------------ | ------------- | --------------------------------------------- |
+| `id`                     | `uuid`        | PK                                            |
+| `user_id`                | `uuid`        | FK → auth.users, cascade delete               |
+| `email`                  | `text`        | the connected account                        |
+| `provider`               | `text`        | `gmail`                                       |
+| `refresh_token_encrypted`| `text`        | AES-256-GCM encrypted OAuth refresh token    |
+| `last_sync_at`           | `timestamptz` | last successful sync                         |
+| `last_history_id`        | `text`        | Gmail historyId (future incremental sync)    |
+| `last_sync_error`        | `text`        | last sync error message                      |
+| `status`                 | `text`        | `connected` / `error` / `revoked`            |
+| `created_at`             | `timestamptz` | default `now()`                              |
+| `updated_at`             | `timestamptz` | default `now()`                              |
+
+RLS policies scope all access to `auth.uid() = user_id`. Tokens are
+encrypted by the app before they reach the database (key:
+`EMAIL_TOKEN_ENCRYPTION_KEY`) — the raw refresh token is never stored.
+
 To run all migrations:
 
 ```bash
@@ -60,4 +86,5 @@ supabase db push
 # Supabase → SQL Editor → paste 0001_shipments.sql → Run
 # → paste 0002_tracking.sql → Run
 # → paste 0003_out_for_delivery.sql → Run
+# → paste 0004_email_discovery.sql → Run
 ```

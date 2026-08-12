@@ -7,3 +7,8 @@
 # TRACKCOURIER_API_KEY=your-trackcourier-key
 # SHIP24_API_KEY=your-ship24-key
 # TRACKING_CACHE_TTL_MINUTES=15
+
+# ── Email discovery (Track 4) — server-side secrets ─────────
+# GOOGLE_OAUTH_CLIENT_ID=your-client-id
+# GOOGLE_OAUTH_CLIENT_SECRET=your-client-secret
+# EMAIL_TOKEN_ENCRYPTION_KEY=base64-32-bytes
