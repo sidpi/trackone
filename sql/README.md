@@ -76,6 +76,17 @@ RLS policies scope all access to `auth.uid() = user_id`. Tokens are
 encrypted by the app before they reach the database (key:
 `EMAIL_TOKEN_ENCRYPTION_KEY`) — the raw refresh token is never stored.
 
+## 0005_fix_email_parser_status.sql — fix email-parser status false positives
+
+Early versions of the email parser marked a shipment `delivered`/`cancelled`
+when the email merely *mentioned* the words (e.g. "we'll email you when your
+order has been delivered", "easy returns"). This resets only
+email-discovered shipments marked `delivered`/`cancelled` that have **no
+tracking history** (never refreshed against the courier) back to `pending`.
+Shipments with real courier history or manual entries are untouched. After
+running it, hit **Refresh tracking** on any shipment to pull the real courier
+status. Safe to run repeatedly.
+
 To run all migrations:
 
 ```bash
@@ -87,4 +98,5 @@ supabase db push
 # → paste 0002_tracking.sql → Run
 # → paste 0003_out_for_delivery.sql → Run
 # → paste 0004_email_discovery.sql → Run
+# → paste 0005_fix_email_parser_status.sql → Run (only if needed)
 ```

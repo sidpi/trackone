@@ -174,7 +174,8 @@ the file and function (`middleware` → `proxy`) — no other changes needed.
 │   ├── 0001_shipments.sql       # shipments table + RLS (Track 2)
 │   ├── 0002_tracking.sql        # history table + cache cols (Track 3)
 │   ├── 0003_out_for_delivery.sql # distinct "out for delivery" status
-│   └── 0004_email_discovery.sql # connected emails + source cols (Track 4)
+│   ├── 0004_email_discovery.sql # connected emails + source cols (Track 4)
+│   └── 0005_fix_email_parser_status.sql # fix parser status false positives
 ├── public/_headers              # Static asset caching (Cloudflare)
 ├── wrangler.jsonc               # OpenNext / Wrangler config
 ├── .env.example                 # Documented env vars
@@ -374,6 +375,11 @@ Run `sql/0004_email_discovery.sql` in Supabase → SQL Editor (after 0001–0003
 It adds `source` / `source_email` / `merchant` / `estimated_delivery` to
 `shipments`, a per-user tracking-number uniqueness index, and the
 `connected_emails` table (encrypted token storage + RLS).
+
+> If shipments discovered before the parser fix show "Delivered" (or
+> "Cancelled") incorrectly, run `sql/0005_fix_email_parser_status.sql` too —
+> it resets email-discovered shipments that have no real courier history
+> back to `pending` (see `sql/README.md`).
 
 ### 2. Set up Google OAuth
 

@@ -213,14 +213,50 @@ export function extractTrackingNumber(
   return candidates[0].number;
 }
 
-/** Maps status words in an email to a ShipTrack status. */
-export function mapEmailStatus(text: string): import("@/lib/types").ShipmentStatus | undefined {
-  const t = text.toLowerCase();
+/**
+ * Maps status words in an email to a ShipTrack status.
+ *
+ * Marketplace emails mention "delivered" and "returns" in passing all the
+ * time ("we'll email you when your order has been delivered", "easy
+ * returns"), so bare keyword matching marks every order as delivered or
+ * cancelled. We strip future/conditional clauses first, then only treat a
+ * surviving "delivered" as an actual delivery.
+ */
+export function mapEmailStatus(
+  text: string
+): import("@/lib/types").ShipmentStatus | undefined {
+  let t = text.toLowerCase();
+
+  // Remove conditional clauses: "when/once/after your order has been
+  // delivered" does not mean the package was delivered.
+  t = t.replace(/\b(when|once|as soon as|after|until|if)\b[^.!?\n]{0,120}\bdelivered\b/g, " ");
+  // Remove future/negative forms: "will be delivered", "not been delivered",
+  // "being delivered", "get it delivered", "to be delivered".
+  t = t
+    .replace(
+      /\b(will|would|should|to|is|are|being|getting|get|gets|it|be|not)\s+(?:be\s+)?delivered\b/g,
+      " "
+    )
+    .replace(/\bnot\s+(?:been\s+)?delivered\b/g, " ");
+  // Remove generic delivery-estimate phrases (harmless, but noisy).
+  t = t.replace(/\bdelivery\s+(?:estimate|date|expected|by|before)\b[^.!?\n]{0,60}/g, " ");
+  // Future "dispatched": "will be dispatched" is not shipped yet.
+  t = t.replace(/\b(will|would|should|to|is|are|be|being|not)\s+(?:be\s+)?dispatched\b/g, " ");
+
   if (/out for delivery/.test(t)) return "out_for_delivery";
+  // Only a surviving past-tense "delivered" counts as a real delivery.
   if (/delivered/.test(t)) return "delivered";
   if (/customs/.test(t)) return "customs";
-  if (/exception|rto|return|cancel|failed/.test(t)) return "cancelled";
-  if (/transit|shipped|dispatch|on the way|picked up/.test(t)) return "in_transit";
+  // Conservative exception signals — not bare "return"/"cancel"/"failed",
+  // which appear in refund/returns policies on every order.
+  if (
+    /exception|rto|undelivered|returned|return to sender|cancelled|delivery failed|failed delivery|delivery attempt failed|attempt failed/.test(
+      t
+    )
+  )
+    return "cancelled";
+  // Past-tense only: "dispatched" (not "before dispatch").
+  if (/transit|shipped|dispatched|on the way|picked up/.test(t)) return "in_transit";
   return undefined;
 }
 
