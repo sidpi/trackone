@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "shipmenttracker",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2024-12-30",
+  "compatibility_flags": [
+    // Enable Node.js APIs in the Workers runtime.
+    "nodejs_compat",
+    // Allow fetching public URLs from the Worker.
+    "global_fetch_strictly_public"
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Serve the app from track.sidcandev.online (subdomain of the
+  // user's root domain, which must already be on Cloudflare).
+  "routes": [
+    {
+      "pattern": "track.sidcandev.online",
+      "custom_domain": true
+    }
+  ],
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      // Must match the "name" of this Worker.
+      "service": "shipmenttracker"
+    }
+  ]
+}

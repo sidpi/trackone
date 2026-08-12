@@ -1,0 +1,8 @@
+# Copy to `.dev.vars` — used by `npm run preview`
+# (OpenNext / Wrangler local runtime). Not used by `next dev`.
+#
+# NEXT_PUBLIC_* values are inlined at build time from .env.local,
+# so they are NOT needed here. Only add server-side secrets.
+
+# NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
