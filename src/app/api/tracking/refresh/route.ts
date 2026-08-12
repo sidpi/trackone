@@ -90,10 +90,23 @@ export async function POST(request: Request) {
   }
 
   // ── Dedupe + insert timeline entries ──
-  const { data: existing } = await supabase
+  const { data: existing, error: historyError } = await supabase
     .from("tracking_history")
     .select("occurred_at, message")
     .eq("shipment_id", shipmentId);
+
+  if (historyError) {
+    // Almost always means the 0002_tracking.sql migration hasn't been run.
+    console.error("Failed to load tracking history:", historyError.message);
+    return NextResponse.json(
+      {
+        error:
+          "Tracking fetched, but the tracking database isn't set up yet — run sql/0002_tracking.sql in Supabase (SQL Editor).",
+        detail: historyError.message,
+      },
+      { status: 500 }
+    );
+  }
 
   const seen = new Set(
     (existing ?? []).map((h: Pick<TrackingHistoryEntry, "occurred_at" | "message">) =>
@@ -142,8 +155,16 @@ export async function POST(request: Request) {
 
   if (updateError) {
     console.error("Failed to update shipment status:", updateError.message);
+    // Best effort: persist the error so the details page can show it.
+    await supabase
+      .from("shipments")
+      .update({ tracking_error: updateError.message })
+      .eq("id", shipmentId);
     return NextResponse.json(
-      { error: "Tracking fetched, but updating the shipment failed." },
+      {
+        error: "Tracking fetched, but updating the shipment failed.",
+        detail: updateError.message,
+      },
       { status: 500 }
     );
   }

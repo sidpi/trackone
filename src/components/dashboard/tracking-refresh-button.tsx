@@ -21,12 +21,17 @@ export function TrackingRefreshButton({ shipmentId }: { shipmentId: string }) {
       });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
+        detail?: string;
         cached?: boolean;
         added?: number;
       };
 
       if (!res.ok) {
-        toast.error(data.error ?? "Tracking refresh failed.");
+        toast.error(
+          data.detail
+            ? `${data.error ?? "Tracking refresh failed."} (${data.detail})`
+            : (data.error ?? "Tracking refresh failed.")
+        );
         return;
       }
       if (data.cached) {
