@@ -20,7 +20,8 @@ export const SHIP24_CODES: Record<string, string> = {
 };
 
 interface Ship24Event {
-  eventTimestamp?: string;
+  /** The actual timestamp field in Ship24 responses. */
+  occurrenceDatetime?: string;
   status?: string;
   statusMilestone?: string;
   description?: string;
@@ -71,7 +72,7 @@ export const ship24Provider: TrackingProvider = {
 
     const checkpoints: TrackingCheckpoint[] = (tracking.events ?? [])
       .map((e) => ({
-        occurredAt: toIsoDate(e.eventTimestamp),
+        occurredAt: toIsoDate(e.occurrenceDatetime),
         tag: normalizeTag(e.statusMilestone ?? e.status ?? inferTag(e.description ?? "")),
         message: e.description ?? e.status ?? "Status update",
         location: e.location || null,

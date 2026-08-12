@@ -38,7 +38,12 @@ export function isMockProvider(): boolean {
   );
 }
 
-/** Tries each provider in order; throws the last error if all fail. */
+/**
+ * Tries each provider in order and returns the first that produces actual
+ * tracking data. A provider that resolves with zero checkpoints (e.g.
+ * TrackCourier reports the number as unknown) is skipped so the next
+ * provider gets a chance; throws the last error if all fail.
+ */
 function createChain(providers: TrackingProvider[]): TrackingProvider {
   return {
     name: "chain",
@@ -46,7 +51,11 @@ function createChain(providers: TrackingProvider[]): TrackingProvider {
       let lastError: unknown = new Error("No tracking providers configured.");
       for (const provider of providers) {
         try {
-          return await provider.track(trackingNumber, opts);
+          const result = await provider.track(trackingNumber, opts);
+          if (result.checkpoints.length > 0) {
+            return result;
+          }
+          lastError = new Error(`${provider.name}: no tracking data found.`);
         } catch (err) {
           lastError = err;
         }

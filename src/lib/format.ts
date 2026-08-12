@@ -20,3 +20,15 @@ export function formatDateTime(iso: string): string {
     minute: "2-digit",
   });
 }
+
+/** e.g. "Jan 5, 2026" — date only, for ETAs. */
+export function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+}

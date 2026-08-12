@@ -58,12 +58,36 @@ export async function POST(request: Request) {
     );
   }
 
-  // ── Simple cache: skip the external API when recently synced ──
-  if (isTrackingFresh(shipment.tracking_checked_at)) {
+  // ── Load existing history (needed for dedupe + cache check) ──
+  const { data: existing, error: historyError } = await supabase
+    .from("tracking_history")
+    .select("occurred_at, message")
+    .eq("shipment_id", shipmentId);
+
+  if (historyError) {
+    // Almost always means the 0002_tracking.sql migration hasn't been run.
+    console.error("Failed to load tracking history:", historyError.message);
+    return NextResponse.json(
+      {
+        error:
+          "Tracking fetched, but the tracking database isn't set up yet — run sql/0002_tracking.sql in Supabase (SQL Editor).",
+        detail: historyError.message,
+      },
+      { status: 500 }
+    );
+  }
+
+  const history = existing ?? [];
+
+  // ── Simple cache: skip the external API when recently synced AND the
+  //    timeline actually has data (self-heals shipments whose earlier
+  //    refresh saved nothing). ──
+  if (isTrackingFresh(shipment.tracking_checked_at) && history.length > 0) {
     return NextResponse.json({
       shipmentId,
       cached: true,
       provider: getTrackingProvider().name,
+      lastChecked: shipment.tracking_checked_at,
     });
   }
 
@@ -90,26 +114,8 @@ export async function POST(request: Request) {
   }
 
   // ── Dedupe + insert timeline entries ──
-  const { data: existing, error: historyError } = await supabase
-    .from("tracking_history")
-    .select("occurred_at, message")
-    .eq("shipment_id", shipmentId);
-
-  if (historyError) {
-    // Almost always means the 0002_tracking.sql migration hasn't been run.
-    console.error("Failed to load tracking history:", historyError.message);
-    return NextResponse.json(
-      {
-        error:
-          "Tracking fetched, but the tracking database isn't set up yet — run sql/0002_tracking.sql in Supabase (SQL Editor).",
-        detail: historyError.message,
-      },
-      { status: 500 }
-    );
-  }
-
   const seen = new Set(
-    (existing ?? []).map((h: Pick<TrackingHistoryEntry, "occurred_at" | "message">) =>
+    history.map((h: Pick<TrackingHistoryEntry, "occurred_at" | "message">) =>
       `${h.occurred_at}|${h.message}`
     )
   );

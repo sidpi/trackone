@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, FlaskConical, TriangleAlert } from "lucide-react";
+import { ArrowLeft, FlaskConical, MapPin, TriangleAlert } from "lucide-react";
 
 import { ShipmentStatusBadge } from "@/components/dashboard/shipment-status-badge";
 import { TrackingRefreshButton } from "@/components/dashboard/tracking-refresh-button";
@@ -13,9 +13,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { formatDateTime, timeAgo } from "@/lib/format";
+import { formatDate, formatDateTime, timeAgo } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { isMockProvider } from "@/lib/tracking";
+import { extractTrackingSummary } from "@/lib/tracking/summary";
 import type { TrackingHistoryEntry } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -53,6 +54,8 @@ export default async function ShipmentDetailsPage({
   const timeline = (history ?? []) as TrackingHistoryEntry[];
   const title = shipment.nickname || shipment.tracking_number;
   const mock = isMockProvider();
+  const summary = extractTrackingSummary(shipment.tracking_raw);
+  const latest = timeline[0];
 
   return (
     <div className="flex flex-col gap-6">
@@ -97,6 +100,39 @@ export default async function ShipmentDetailsPage({
             Try refreshing again in a moment.
           </span>
         </div>
+      )}
+
+      {latest && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader className="flex-row items-center justify-between gap-2 py-4">
+            <CardTitle className="text-sm">Latest update</CardTitle>
+            <ShipmentStatusBadge status={latest.status ?? shipment.status} />
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-sm font-medium">{latest.message}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              {latest.location && (
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="size-3.5" />
+                  {latest.location}
+                </span>
+              )}
+              <time dateTime={latest.occurred_at}>{timeAgo(latest.occurred_at)}</time>
+            </div>
+            {(summary.origin || summary.destination || summary.eta) && (
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+                {summary.origin && summary.destination && (
+                  <span>
+                    {summary.origin} <span aria-hidden>→</span> {summary.destination}
+                  </span>
+                )}
+                {summary.eta && (
+                  <span>Expected delivery: {formatDate(summary.eta)}</span>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       <div className="grid gap-4 lg:grid-cols-3">

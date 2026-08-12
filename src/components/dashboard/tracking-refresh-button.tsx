@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { timeAgo } from "@/lib/format";
 
 export function TrackingRefreshButton({ shipmentId }: { shipmentId: string }) {
   const router = useRouter();
@@ -23,6 +24,7 @@ export function TrackingRefreshButton({ shipmentId }: { shipmentId: string }) {
         error?: string;
         detail?: string;
         cached?: boolean;
+        lastChecked?: string;
         added?: number;
       };
 
@@ -35,7 +37,11 @@ export function TrackingRefreshButton({ shipmentId }: { shipmentId: string }) {
         return;
       }
       if (data.cached) {
-        toast.info("Tracking is already up to date.");
+        toast.info(
+          data.lastChecked
+            ? `Tracking is up to date (last checked ${timeAgo(data.lastChecked)}).`
+            : "Tracking is already up to date."
+        );
       } else if ((data.added ?? 0) > 0) {
         toast.success(
           `Tracking updated — ${data.added} new update${data.added === 1 ? "" : "s"}.`
