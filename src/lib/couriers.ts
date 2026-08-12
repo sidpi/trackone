@@ -1,11 +1,6 @@
-// Static courier list — Indian e-commerce couriers. No courier API
-// beyond the AfterShip tracking integration (Track 3).
-//
-// AfterShip slug notes (verified against AfterShip's supported-couriers
-// list): Ekart, Ecom Express, XpressBees, DTDC and Shadowfax track with
-// just the API key. Delhivery, BlueDart, Gati-KWE and DHL need a
-// "courier connection" set up in the AfterShip dashboard before tracking
-// returns data.
+// Static courier list — Indian e-commerce couriers. Courier slugs/codes
+// for the tracking providers live in each provider's own map
+// (src/lib/tracking/trackcourier.ts, ship24.ts, indian-courier-api.ts).
 
 export const COURIERS = [
   "Ekart",
@@ -34,20 +29,4 @@ export const COURIER_LABELS: Record<Courier, string> = {
   DHL: "DHL",
 };
 
-/** AfterShip slugs for tracking. */
-export const COURIER_SLUGS: Record<string, string> = {
-  Ekart: "ekart",
-  Ecom: "ecom-express",
-  Delhivery: "delhivery",
-  Xpressbees: "xpressbees",
-  Bluedart: "bluedart",
-  Gati: "gati-kwe",
-  DTDC: "dtdc",
-  Shadowfax: "shadowfax",
-  DHL: "dhl",
-};
 
-/** Returns the AfterShip slug for a courier display name, or null. */
-export function getCourierSlug(courier: string): string | null {
-  return COURIER_SLUGS[courier] ?? null;
-}

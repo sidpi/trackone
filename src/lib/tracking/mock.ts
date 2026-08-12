@@ -1,14 +1,14 @@
 import type { TrackingProvider, TrackResult } from "./types";
 
 /**
- * Mock provider — used when AFTERSHIP_API_KEY is not set so the feature is
- * demoable locally. Progresses deterministically based on how long the
+ * Mock provider — used when no provider key is configured so the feature
+ * is demoable locally. Progresses deterministically based on how long the
  * shipment has existed. Never used in production once a real key is set.
  */
 export const mockProvider: TrackingProvider = {
   name: "mock",
 
-  async track(_slug, trackingNumber, opts) {
+  async track(trackingNumber, opts) {
     const created = opts?.createdAt ? new Date(opts.createdAt).getTime() : Date.now();
     const ageDays = (Date.now() - created) / 86_400_000;
     const seed = [...trackingNumber].reduce((acc, c) => acc + c.charCodeAt(0), 0);

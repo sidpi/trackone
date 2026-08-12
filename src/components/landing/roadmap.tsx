@@ -37,7 +37,7 @@ const tracks = [
     status: "Live now",
     tone: "default" as const,
     points: [
-      "Courier tracking (AfterShip)",
+      "Courier tracking (TrackCourier + Ship24)",
       "Status timeline on every shipment",
       "Caching & error handling",
     ],

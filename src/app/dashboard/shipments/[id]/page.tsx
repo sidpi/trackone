@@ -83,8 +83,9 @@ export default async function ShipmentDetailsPage({
       {mock && (
         <div className="flex items-center gap-2 rounded-lg border border-dashed bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
           <FlaskConical className="size-4 shrink-0" />
-          Demo mode — no courier API key configured, so updates are simulated.
-          Set <code className="font-mono">AFTERSHIP_API_KEY</code> for live tracking.
+          Demo mode — no courier provider key configured, so updates are
+          simulated. Set <code className="font-mono">TRACKCOURIER_API_KEY</code> or{" "}
+          <code className="font-mono">SHIP24_API_KEY</code> for live tracking.
         </div>
       )}
 

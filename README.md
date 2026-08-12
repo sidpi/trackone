@@ -3,8 +3,8 @@
 **Track 1:** polished landing page + working login + protected dashboard shell.
 **Track 2:** full shipments CRUD — create, edit, delete, and status badges,
 with per-user Row Level Security.
-**Track 3:** courier tracking — AfterShip integration with a status timeline,
-caching, and error handling.
+**Track 3:** courier tracking — TrackCourier.io + Ship24 integration with a
+status timeline, caching, and error handling.
 
 A Next.js (App Router) web app for tracking shipments, built with TypeScript,
 Tailwind CSS, shadcn/ui, and Supabase (Auth + Postgres). Deployed to
@@ -152,9 +152,9 @@ the file and function (`middleware` → `proxy`) — no other changes needed.
 │   │   ├── utils.ts             # cn() helper
 │   │   ├── format.ts            # timeAgo / formatDateTime
 │   │   ├── types.ts             # Shipment + tracking types
-│   │   ├── couriers.ts          # Courier list + AfterShip slug map
-│   │   ├── tracking/            # Provider abstraction (types, index,
-│   │   │                        # aftership.ts, mock.ts)
+│   │   ├── couriers.ts          # Courier list (slugs live in providers)
+│   │   ├── tracking/            # Providers (types, index, infer, mock,
+│   │   │                        # trackcourier.ts, ship24.ts)
 │   │   └── supabase/            # client.ts, server.ts
 │   └── middleware.ts            # Session refresh + route guard (Edge)
 ├── sql/                         # Postgres migrations
@@ -227,13 +227,14 @@ In the Worker dashboard → **Settings → Variables and Secrets**:
 | `NEXT_PUBLIC_SUPABASE_URL`     | Text    | your Supabase project URL                   |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY`| Text    | your Supabase anon key                      |
 | `NEXT_PUBLIC_SITE_URL`         | Text    | `https://track.sidcandev.online`            |
+| `TRACKCOURIER_API_KEY`         | Secret  | your TrackCourier.io API key                |
+| `SHIP24_API_KEY`               | Secret  | your Ship24 API key                         |
 | `INDIAN_COURIER_API_URL`       | Text    | URL of your hosted indian-courier-api service |
-| `AFTERSHIP_API_KEY`            | Secret  | your AfterShip Tracking API key             |
 | `TRACKING_CACHE_TTL_MINUTES`   | Text    | `15` (optional)                             |
 
 `NEXT_PUBLIC_*` values are also inlined at **build** time — if you build in
-CI, set them there too. `AFTERSHIP_API_KEY` is a **runtime secret**: store it
-as a Worker secret (never in code or build vars). Without it the app falls
+CI, set them there too. Provider keys are **runtime secrets**: store them as
+Worker secrets (never in code or build vars). Without any keys the app falls
 back to the demo/mock provider.
 
 ### 4. Continuous deployment (recommended)
@@ -275,8 +276,8 @@ GitHub → Cloudflare CI path instead.
   **Refresh tracking** calls `POST /api/tracking/refresh`.
 - That route is a secure serverless function: it only refreshes shipments
   owned by the signed-in user (RLS + explicit lookup), and the courier API
-  key (`AFTERSHIP_API_KEY`) never leaves the server. Provider responses are
-  mapped into ShipTrack statuses, new checkpoints are appended to
+  keys (e.g. `TRACKCOURIER_API_KEY`) never leave the server. Provider
+  responses are mapped into ShipTrack statuses, new checkpoints are appended to
   `tracking_history` (deduped), and the shipment status is updated.
 - **Caching**: a successful refresh is cached via `tracking_checked_at` for
   `TRACKING_CACHE_TTL_MINUTES` (default 15) — no external call on repeat
@@ -285,13 +286,21 @@ GitHub → Cloudflare CI path instead.
   shown on the details page; the endpoint returns proper HTTP codes
   (401/400/404/502) and the UI surfaces them via toasts.
 - **Providers** (swappable interface in `src/lib/tracking/`):
-  1. **indian-courier-api** — your self-hosted scraper service
+  1. **TrackCourier.io** (`trackcourier.ts`) — when `TRACKCOURIER_API_KEY`
+     is set. Indian-first, 25+ couriers; free tier is 100 requests/month.
+  2. **Ship24** (`ship24.ts`) — when `SHIP24_API_KEY` is set. Global
+     aggregator with courier auto-detection.
+  3. **indian-courier-api** — your self-hosted scraper service
      (github.com/rajatdhoot123/indian-courier-api) when
      `INDIAN_COURIER_API_URL` is set. See "Deploying the Indian courier
      tracking service" below.
-  2. **AfterShip v9** (`aftership.ts`) when `AFTERSHIP_API_KEY` is set.
-  3. **mock** — clearly-labeled simulated timeline when neither is
+  4. **mock** — clearly-labeled simulated timeline when none are
      configured, so the feature stays demoable locally.
+
+  When more than one real provider is configured they form a **failover
+  chain**: each is tried in order until one returns data (a tracking number
+  unknown to TrackCourier can be resolved by Ship24, and vice versa). The
+  15-minute cache also keeps provider quota usage low.
 
 ### Deploying the Indian courier tracking service
 
@@ -321,14 +330,14 @@ format as the other providers.
 > pre-2023 site and no longer exist — the tracking widget is now a minified
 > Svelte app with unstable generated IDs. Real tracking through this service
 > **does not currently work**, and scrapers are fragile by nature. The
-> **AfterShip API provider** (`AFTERSHIP_API_KEY`) is the recommended,
-> supported path; the mock provider keeps the app demoable in the meantime.
+> **TrackCourier.io and Ship24** are the supported path (see above); the
+> mock provider keeps the app demoable in the meantime.
 
 ## Roadmap
 
 - **Track 1 (done)** — Landing page, Supabase auth, dashboard shell.
 - **Track 2 (done)** — Shipments CRUD, status badges, RLS.
-- **Track 3 (done)** — Courier tracking (AfterShip), timeline, caching.
+- **Track 3 (done)** — Courier tracking (TrackCourier + Ship24), timeline, caching.
 - **Track 4 (planned)** — Automatic shipment discovery: parse tracking
   numbers from forwarded emails/SMS so nothing needs manual entry.
 

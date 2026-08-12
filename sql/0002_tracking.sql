@@ -1,7 +1,7 @@
 -- 0002_tracking.sql
 -- Track 3: courier tracking — history timeline + caching columns.
 --
--- Run after 0001_shipments.sql. Works with any provider (AfterShip, mock).
+-- Run after 0001_shipments.sql. Works with any provider (TrackCourier, Ship24, mock).
 
 -- ── New columns on shipments ─────────────────────────────────────────
 alter table public.shipments

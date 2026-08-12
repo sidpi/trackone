@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { getCourierSlug } from "@/lib/couriers";
 import { createClient } from "@/lib/supabase/server";
 import {
   getTrackingProvider,
@@ -59,14 +58,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const slug = getCourierSlug(shipment.courier);
-  if (!slug) {
-    return NextResponse.json(
-      { error: `Courier "${shipment.courier}" isn't trackable yet.` },
-      { status: 400 }
-    );
-  }
-
   // ── Simple cache: skip the external API when recently synced ──
   if (isTrackingFresh(shipment.tracking_checked_at)) {
     return NextResponse.json({
@@ -80,8 +71,7 @@ export async function POST(request: Request) {
   const provider = getTrackingProvider();
   let result;
   try {
-    result = await provider.track(slug, shipment.tracking_number, {
-      title: shipment.nickname ?? undefined,
+    result = await provider.track(shipment.tracking_number, {
       createdAt: shipment.created_at,
       courierName: shipment.courier,
     });

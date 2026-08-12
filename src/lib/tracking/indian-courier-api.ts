@@ -1,3 +1,4 @@
+import { inferTag } from "./infer";
 import type { TrackingCheckpoint, TrackingProvider, TrackResult } from "./types";
 
 /**
@@ -49,20 +50,6 @@ function parseDate(value?: string): string {
   return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
 }
 
-/** Infers a ShipTrack tag from the checkpoint detail text. */
-export function inferTag(detail: string): string {
-  const text = detail.toLowerCase();
-  // "Out for delivery" must be checked before the delivered pattern, which
-  // would otherwise match "delivery".
-  if (/out for delivery/.test(text)) return "intransit";
-  if (/delivered|delivery successful|delivery complete|handed over|recipient/.test(text)) return "delivered";
-  if (/customs/.test(text)) return "customs";
-  if (/in transit|on the way|dispatched|shipped|transit/.test(text)) return "intransit";
-  if (/picked up|information received|received|booked/.test(text)) return "inforeceived";
-  if (/return|undelivered|failed|cancel/.test(text)) return "cancelled";
-  return "pending";
-}
-
 interface ServiceCheckpoint {
   location?: string;
   detail?: string;
@@ -81,7 +68,7 @@ export function createIndianCourierApiProvider(baseUrl: string): TrackingProvide
   return {
     name: "indian-courier-api",
 
-    async track(_slug, trackingNumber, opts) {
+    async track(trackingNumber, opts) {
       const courierName = opts?.courierName ?? "";
       const path = getIndianCourierPath(courierName);
       if (!path) {

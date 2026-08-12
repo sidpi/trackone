@@ -4,10 +4,6 @@
 # NEXT_PUBLIC_* values are inlined at build time from .env.local,
 # so they are NOT needed here. Only add server-side secrets.
 
-# NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-# NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
-
-# Server-side secrets for `npm run preview` (Wrangler runtime):
-# INDIAN_COURIER_API_URL=https://your-tracking-service.example.com
-# AFTERSHIP_API_KEY=your-aftership-key
+# TRACKCOURIER_API_KEY=your-trackcourier-key
+# SHIP24_API_KEY=your-ship24-key
 # TRACKING_CACHE_TTL_MINUTES=15

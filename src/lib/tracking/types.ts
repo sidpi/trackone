@@ -1,5 +1,5 @@
-// Tracking provider abstraction. Swap AfterShip for another provider by
-// adding a new implementation and updating the factory in index.ts.
+// Tracking provider abstraction. Add a provider by implementing this
+// interface and registering it in the factory in index.ts.
 
 export interface TrackingCheckpoint {
   /** ISO timestamp of the event. */
@@ -24,8 +24,6 @@ export interface TrackResult {
 }
 
 export interface TrackOptions {
-  /** Optional human-readable title (AfterShip "title"). */
-  title?: string;
   /** Shipment creation time (used by the mock provider). */
   createdAt?: string;
   /** Courier display name (e.g. "Ekart") — used by providers that need it. */
@@ -33,6 +31,6 @@ export interface TrackOptions {
 }
 
 export interface TrackingProvider {
-  name: "aftership" | "indian-courier-api" | "mock";
-  track(slug: string, trackingNumber: string, opts?: TrackOptions): Promise<TrackResult>;
+  name: "trackcourier" | "ship24" | "indian-courier-api" | "chain" | "mock";
+  track(trackingNumber: string, opts?: TrackOptions): Promise<TrackResult>;
 }
