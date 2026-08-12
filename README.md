@@ -3,14 +3,16 @@
 **Track 1:** polished landing page + working login + protected dashboard shell.
 **Track 2:** full shipments CRUD — create, edit, delete, and status badges,
 with per-user Row Level Security.
+**Track 3:** courier tracking — AfterShip integration with a status timeline,
+caching, and error handling.
 
 A Next.js (App Router) web app for tracking shipments, built with TypeScript,
 Tailwind CSS, shadcn/ui, and Supabase (Auth + Postgres). Deployed to
 **Cloudflare** via the OpenNext adapter, behind the custom domain
 **`track.sidcandev.online`** (a subdomain of `sidcandev.online`).
 
-> Courier tracking APIs are intentionally **not** built yet — that's Track 3.
-> Shipments are stored locally in Postgres with manual status updates.
+> Track 4 (automatic shipment discovery — email/SMS parsing) is the next
+> milestone and is **not** built yet.
 
 ---
 
@@ -99,6 +101,8 @@ on the protected dashboard.
 | `/`                   | Landing page (hero, features, roadmap, CTA)              |
 | `/login`              | Sign-in page (Supabase email + password)                 |
 | `/dashboard`          | Protected dashboard: shipments list, status badges, create/edit/delete |
+| `/dashboard/shipments/[id]` | Shipment details: tracking timeline, refresh, error states |
+| `/api/tracking/refresh`    | Secure serverless fn: fetches courier status, updates history |
 | `/auth/callback`      | OAuth/magic-link code exchange (ready for future providers) |
 | `/auth/signout`       | POST route that signs the user out                       |
 
@@ -132,7 +136,9 @@ the file and function (`middleware` → `proxy`) — no other changes needed.
 │   │   ├── dashboard/           # Protected area
 │   │   │   ├── layout.tsx       # Auth guard + app shell
 │   │   │   ├── page.tsx         # Fetches shipments (RLS), renders list
-│   │   │   └── actions.ts       # Server actions: create/update/delete
+│   │   │   ├── actions.ts       # Server actions: create/update/delete
+│   │   │   └── shipments/[id]/  # Details page + tracking timeline
+│   │   ├── api/tracking/refresh/route.ts  # Serverless tracking refresher
 │   │   └── auth/                # Auth route handlers
 │   │       ├── callback/route.ts
 │   │       └── signout/route.ts
@@ -141,16 +147,20 @@ the file and function (`middleware` → `proxy`) — no other changes needed.
 │   │   ├── landing/             # Landing page sections
 │   │   ├── auth/                # Login form
 │   │   └── dashboard/           # Shipment dialog, table, status badge,
-│   │                            # row actions, header, user menu
+│   │                            # timeline, refresh button, row actions
 │   ├── lib/
 │   │   ├── utils.ts             # cn() helper
-│   │   ├── types.ts             # Shipment types + statuses
-│   │   ├── couriers.ts          # Static courier list (no API yet)
+│   │   ├── format.ts            # timeAgo / formatDateTime
+│   │   ├── types.ts             # Shipment + tracking types
+│   │   ├── couriers.ts          # Courier list + AfterShip slug map
+│   │   ├── tracking/            # Provider abstraction (types, index,
+│   │   │                        # aftership.ts, mock.ts)
 │   │   └── supabase/            # client.ts, server.ts
 │   └── middleware.ts            # Session refresh + route guard (Edge)
 ├── sql/                         # Postgres migrations
 │   ├── README.md
-│   └── 0001_shipments.sql       # shipments table + RLS (Track 2)
+│   ├── 0001_shipments.sql       # shipments table + RLS (Track 2)
+│   └── 0002_tracking.sql        # history table + cache cols (Track 3)
 ├── public/_headers              # Static asset caching (Cloudflare)
 ├── wrangler.jsonc               # OpenNext / Wrangler config
 ├── .env.example                 # Documented env vars
@@ -217,9 +227,13 @@ In the Worker dashboard → **Settings → Variables and Secrets**:
 | `NEXT_PUBLIC_SUPABASE_URL`     | Text    | your Supabase project URL                   |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY`| Text    | your Supabase anon key                      |
 | `NEXT_PUBLIC_SITE_URL`         | Text    | `https://track.sidcandev.online`            |
+| `AFTERSHIP_API_KEY`            | Secret  | your AfterShip Tracking API key             |
+| `TRACKING_CACHE_TTL_MINUTES`   | Text    | `15` (optional)                             |
 
 `NEXT_PUBLIC_*` values are also inlined at **build** time — if you build in
-CI, set them there too.
+CI, set them there too. `AFTERSHIP_API_KEY` is a **runtime secret**: store it
+as a Worker secret (never in code or build vars). Without it the app falls
+back to the demo/mock provider.
 
 ### 4. Continuous deployment (recommended)
 
@@ -252,13 +266,35 @@ GitHub → Cloudflare CI path instead.
 - All mutations run through server actions in `src/app/dashboard/actions.ts`
   with input validation; the `user_id` is always set from the session, so a
   user can never create rows for someone else.
-- Couriers are a static list in `src/lib/couriers.ts` — no courier API yet.
+
+## Track 3 — Courier tracking (live)
+
+- Run `sql/0002_tracking.sql` after `0001` (history table + cache columns).
+- Click any shipment row → **details page** with a tracking timeline.
+  **Refresh tracking** calls `POST /api/tracking/refresh`.
+- That route is a secure serverless function: it only refreshes shipments
+  owned by the signed-in user (RLS + explicit lookup), and the courier API
+  key (`AFTERSHIP_API_KEY`) never leaves the server. Provider responses are
+  mapped into ShipTrack statuses, new checkpoints are appended to
+  `tracking_history` (deduped), and the shipment status is updated.
+- **Caching**: a successful refresh is cached via `tracking_checked_at` for
+  `TRACKING_CACHE_TTL_MINUTES` (default 15) — no external call on repeat
+  refreshes within the window.
+- **Error states**: provider failures are persisted to `tracking_error` and
+  shown on the details page; the endpoint returns proper HTTP codes
+  (401/400/404/502) and the UI surfaces them via toasts.
+- **Providers**: AfterShip v9 (`src/lib/tracking/aftership.ts`) behind a
+  swappable interface. With no `AFTERSHIP_API_KEY` set, a clearly-labeled
+  **mock provider** generates a realistic timeline so the feature is
+  demoable locally.
 
 ## Roadmap
 
 - **Track 1 (done)** — Landing page, Supabase auth, dashboard shell.
 - **Track 2 (done)** — Shipments CRUD, status badges, RLS.
-- **Track 3 (planned)** — Live courier tracking, notifications, analytics.
+- **Track 3 (done)** — Courier tracking (AfterShip), timeline, caching.
+- **Track 4 (planned)** — Automatic shipment discovery: parse tracking
+  numbers from forwarded emails/SMS so nothing needs manual entry.
 
 ---
 

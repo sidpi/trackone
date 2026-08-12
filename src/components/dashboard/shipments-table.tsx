@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Package } from "lucide-react";
 
 import { ShipmentRowActions } from "@/components/dashboard/shipment-row-actions";
@@ -18,19 +19,25 @@ function ShipmentRow({ shipment }: { shipment: Shipment }) {
   return (
     <tr className="transition-colors hover:bg-muted/40">
       <td className="px-4 py-3">
-        <div className="flex items-center gap-3">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+        <Link
+          href={`/dashboard/shipments/${shipment.id}`}
+          className="group flex items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
             <Package className="size-4" />
           </span>
           <div className="min-w-0">
-            <p className="truncate font-medium" title={label}>
+            <p
+              className="truncate font-medium transition-colors group-hover:text-primary"
+              title={label}
+            >
               {label}
             </p>
             <p className="truncate font-mono text-xs text-muted-foreground">
               {shipment.tracking_number}
             </p>
           </div>
-        </div>
+        </Link>
       </td>
       <td className="px-4 py-3 text-muted-foreground">{shipment.courier}</td>
       <td className="px-4 py-3">

@@ -6,3 +6,7 @@
 
 # NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
+
+# Server-side secrets for `npm run preview` (Wrangler runtime):
+# AFTERSHIP_API_KEY=your-aftership-key
+# TRACKING_CACHE_TTL_MINUTES=15

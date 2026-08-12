@@ -1,0 +1,63 @@
+"use client";
+
+import * as React from "react";
+import { Loader2, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+
+export function TrackingRefreshButton({ shipmentId }: { shipmentId: string }) {
+  const router = useRouter();
+  const [isPending, setIsPending] = React.useState(false);
+
+  async function handleRefresh() {
+    setIsPending(true);
+    try {
+      const res = await fetch("/api/tracking/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shipmentId }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        cached?: boolean;
+        added?: number;
+      };
+
+      if (!res.ok) {
+        toast.error(data.error ?? "Tracking refresh failed.");
+        return;
+      }
+      if (data.cached) {
+        toast.info("Tracking is already up to date.");
+      } else if ((data.added ?? 0) > 0) {
+        toast.success(
+          `Tracking updated — ${data.added} new update${data.added === 1 ? "" : "s"}.`
+        );
+      } else {
+        toast.success("No new tracking updates.");
+      }
+      router.refresh();
+    } catch {
+      toast.error("Network error while refreshing tracking.");
+    } finally {
+      setIsPending(false);
+    }
+  }
+
+  return (
+    <Button
+      variant="outline"
+      onClick={handleRefresh}
+      disabled={isPending}
+    >
+      {isPending ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : (
+        <RefreshCw data-icon="inline-start" />
+      )}
+      {isPending ? "Checking…" : "Refresh tracking"}
+    </Button>
+  );
+}

@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,14 +32,14 @@ const tracks = [
     ],
   },
   {
-    icon: Circle,
+    icon: CheckCircle2,
     title: "Track 3 — Tracking",
-    status: "Planned",
-    tone: "outline" as const,
+    status: "Live now",
+    tone: "default" as const,
     points: [
-      "Live courier status updates",
-      "Email notifications",
-      "Analytics & reporting",
+      "Courier tracking (AfterShip)",
+      "Status timeline on every shipment",
+      "Caching & error handling",
     ],
   },
 ];
@@ -54,8 +54,8 @@ export function Roadmap() {
             Built in tracks, shipped incrementally
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Track 1 and 2 are live — sign in, add shipments, and track their
-            status. Live courier tracking arrives in Track 3.
+            Tracks 1–3 are live — add shipments, refresh tracking, and follow
+            the timeline. Automatic shipment discovery is next.
           </p>
         </div>
 

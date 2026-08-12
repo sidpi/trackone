@@ -32,3 +32,22 @@ export type NewShipmentInput = {
 export type UpdateShipmentInput = NewShipmentInput & {
   status: ShipmentStatus;
 };
+
+/** One row of the tracking timeline (sql/0002_tracking.sql). */
+export interface TrackingHistoryEntry {
+  id: string;
+  shipment_id: string;
+  status: ShipmentStatus | null;
+  message: string;
+  location: string | null;
+  occurred_at: string;
+  raw: unknown | null;
+  created_at: string;
+}
+
+/** Shipment row shape after 0002_tracking.sql columns are added. */
+export type ShipmentWithTracking = Shipment & {
+  tracking_checked_at: string | null;
+  tracking_error: string | null;
+  tracking_raw: unknown | null;
+};

@@ -31,3 +31,22 @@ export const COURIER_LABELS: Record<Courier, string> = {
   "China Post": "China Post",
   Other: "Other",
 };
+
+/** AfterShip slugs for tracking. "Other" has no slug → not trackable. */
+export const COURIER_SLUGS: Record<string, string> = {
+  DHL: "dhl",
+  FedEx: "fedex",
+  UPS: "ups",
+  USPS: "usps",
+  TNT: "tnt",
+  Aramex: "aramex",
+  DPD: "dpd",
+  GLS: "gls",
+  "Royal Mail": "royal-mail",
+  "China Post": "china-post",
+};
+
+/** Returns the AfterShip slug for a courier display name, or null. */
+export function getCourierSlug(courier: string): string | null {
+  return COURIER_SLUGS[courier] ?? null;
+}
