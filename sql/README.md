@@ -13,7 +13,7 @@ their own rows.
 | `id`              | `uuid`        | PK, default `gen_random_uuid()`                |
 | `user_id`         | `uuid`        | FK → `auth.users(id)`, cascades on delete      |
 | `tracking_number` | `text`        | required                                       |
-| `courier`         | `text`        | required (DHL, FedEx, UPS, …)                  |
+| `courier`         | `text`        | required (Ekart, Ecom, Delhivery, …)           |
 | `nickname`        | `text`        | optional, nullable                             |
 | `status`          | `text`        | default `'pending'`; check-constrained         |
 | `created_at`      | `timestamptz` | default `now()`                                |

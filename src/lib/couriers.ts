@@ -1,49 +1,50 @@
-// Static courier list — no courier API yet (per Track 2 scope).
-// A tracking-URL builder can be added here later per courier.
+// Static courier list — Indian e-commerce couriers. No courier API
+// beyond the AfterShip tracking integration (Track 3).
+//
+// AfterShip slug notes (verified against AfterShip's supported-couriers
+// list): Ekart, Ecom Express, XpressBees, DTDC and Shadowfax track with
+// just the API key. Delhivery, BlueDart, Gati-KWE and DHL need a
+// "courier connection" set up in the AfterShip dashboard before tracking
+// returns data.
 
 export const COURIERS = [
+  "Ekart",
+  "Ecom",
+  "Delhivery",
+  "Xpressbees",
+  "Bluedart",
+  "Gati",
+  "DTDC",
+  "Shadowfax",
   "DHL",
-  "FedEx",
-  "UPS",
-  "USPS",
-  "TNT",
-  "Aramex",
-  "DPD",
-  "GLS",
-  "Royal Mail",
-  "China Post",
-  "Other",
 ] as const;
 
 export type Courier = (typeof COURIERS)[number];
 
 /** Labels in the same order as `COURIERS` — add pretty names if needed. */
 export const COURIER_LABELS: Record<Courier, string> = {
+  Ekart: "Ekart",
+  Ecom: "Ecom",
+  Delhivery: "Delhivery",
+  Xpressbees: "Xpressbees",
+  Bluedart: "Bluedart",
+  Gati: "Gati",
+  DTDC: "DTDC",
+  Shadowfax: "Shadowfax",
   DHL: "DHL",
-  FedEx: "FedEx",
-  UPS: "UPS",
-  USPS: "USPS",
-  TNT: "TNT",
-  Aramex: "Aramex",
-  DPD: "DPD",
-  GLS: "GLS",
-  "Royal Mail": "Royal Mail",
-  "China Post": "China Post",
-  Other: "Other",
 };
 
-/** AfterShip slugs for tracking. "Other" has no slug → not trackable. */
+/** AfterShip slugs for tracking. */
 export const COURIER_SLUGS: Record<string, string> = {
+  Ekart: "ekart",
+  Ecom: "ecom-express",
+  Delhivery: "delhivery",
+  Xpressbees: "xpressbees",
+  Bluedart: "bluedart",
+  Gati: "gati-kwe",
+  DTDC: "dtdc",
+  Shadowfax: "shadowfax",
   DHL: "dhl",
-  FedEx: "fedex",
-  UPS: "ups",
-  USPS: "usps",
-  TNT: "tnt",
-  Aramex: "aramex",
-  DPD: "dpd",
-  GLS: "gls",
-  "Royal Mail": "royal-mail",
-  "China Post": "china-post",
 };
 
 /** Returns the AfterShip slug for a courier display name, or null. */
