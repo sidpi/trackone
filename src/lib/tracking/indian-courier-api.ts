@@ -52,8 +52,10 @@ function parseDate(value?: string): string {
 /** Infers a ShipTrack tag from the checkpoint detail text. */
 export function inferTag(detail: string): string {
   const text = detail.toLowerCase();
-  if (/deliver|handed over|recipient/.test(text)) return "delivered";
+  // "Out for delivery" must be checked before the delivered pattern, which
+  // would otherwise match "delivery".
   if (/out for delivery/.test(text)) return "intransit";
+  if (/delivered|delivery successful|delivery complete|handed over|recipient/.test(text)) return "delivered";
   if (/customs/.test(text)) return "customs";
   if (/in transit|on the way|dispatched|shipped|transit/.test(text)) return "intransit";
   if (/picked up|information received|received|booked/.test(text)) return "inforeceived";

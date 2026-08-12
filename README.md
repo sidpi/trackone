@@ -314,10 +314,15 @@ INDIAN_COURIER_API_URL=https://your-tracking-service.example.com
 
 Our app calls `GET {INDIAN_COURIER_API_URL}/api/track/{courier}/{trackingId}`
 and maps `{ data: [{ location, detail, date }] }` into the same timeline
-format as the other providers. Per the service's README, Ekart, Ecom,
-Delhivery, Bluedart, DTDC and DHL are reported working; Xpressbees, Gati
-and Shadowfax are marked NA. Checkpoints are de-duplicated and cached like
-any other provider.
+format as the other providers.
+
+> ⚠️ **Known issue (verified Aug 2026):** the scraper's DOM selectors
+> (`#shipment-result-card`, `.checkpoint__detail`) are from AfterShip's
+> pre-2023 site and no longer exist — the tracking widget is now a minified
+> Svelte app with unstable generated IDs. Real tracking through this service
+> **does not currently work**, and scrapers are fragile by nature. The
+> **AfterShip API provider** (`AFTERSHIP_API_KEY`) is the recommended,
+> supported path; the mock provider keeps the app demoable in the meantime.
 
 ## Roadmap
 
