@@ -28,9 +28,11 @@ export interface TrackOptions {
   title?: string;
   /** Shipment creation time (used by the mock provider). */
   createdAt?: string;
+  /** Courier display name (e.g. "Ekart") — used by providers that need it. */
+  courierName?: string;
 }
 
 export interface TrackingProvider {
-  name: "aftership" | "mock";
+  name: "aftership" | "indian-courier-api" | "mock";
   track(slug: string, trackingNumber: string, opts?: TrackOptions): Promise<TrackResult>;
 }

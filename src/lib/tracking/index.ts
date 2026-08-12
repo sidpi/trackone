@@ -1,19 +1,28 @@
 import { aftershipProvider } from "./aftership";
+import { createIndianCourierApiProvider } from "./indian-courier-api";
 import { mockProvider } from "./mock";
 import type { TrackingProvider } from "./types";
 import type { ShipmentStatus } from "@/lib/types";
 
 /**
- * Returns the real provider when an API key is configured, otherwise the
- * mock provider (clearly labeled in the UI so nobody mistakes it for real
- * tracking data).
+ * Provider selection:
+ *   1. INDIAN_COURIER_API_URL  → self-hosted indian-courier-api service
+ *   2. AFTERSHIP_API_KEY       → AfterShip v9 API
+ *   3. otherwise               → mock (clearly labeled in the UI)
  */
 export function getTrackingProvider(): TrackingProvider {
-  return process.env.AFTERSHIP_API_KEY ? aftershipProvider : mockProvider;
+  const indianCourierUrl = process.env.INDIAN_COURIER_API_URL;
+  if (indianCourierUrl) {
+    return createIndianCourierApiProvider(indianCourierUrl);
+  }
+  if (process.env.AFTERSHIP_API_KEY) {
+    return aftershipProvider;
+  }
+  return mockProvider;
 }
 
 export function isMockProvider(): boolean {
-  return !process.env.AFTERSHIP_API_KEY;
+  return !process.env.INDIAN_COURIER_API_URL && !process.env.AFTERSHIP_API_KEY;
 }
 
 /** Provider tag → ShipTrack status. Unknown tags fall back to "pending". */

@@ -227,6 +227,7 @@ In the Worker dashboard → **Settings → Variables and Secrets**:
 | `NEXT_PUBLIC_SUPABASE_URL`     | Text    | your Supabase project URL                   |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY`| Text    | your Supabase anon key                      |
 | `NEXT_PUBLIC_SITE_URL`         | Text    | `https://track.sidcandev.online`            |
+| `INDIAN_COURIER_API_URL`       | Text    | URL of your hosted indian-courier-api service |
 | `AFTERSHIP_API_KEY`            | Secret  | your AfterShip Tracking API key             |
 | `TRACKING_CACHE_TTL_MINUTES`   | Text    | `15` (optional)                             |
 
@@ -283,10 +284,40 @@ GitHub → Cloudflare CI path instead.
 - **Error states**: provider failures are persisted to `tracking_error` and
   shown on the details page; the endpoint returns proper HTTP codes
   (401/400/404/502) and the UI surfaces them via toasts.
-- **Providers**: AfterShip v9 (`src/lib/tracking/aftership.ts`) behind a
-  swappable interface. With no `AFTERSHIP_API_KEY` set, a clearly-labeled
-  **mock provider** generates a realistic timeline so the feature is
-  demoable locally.
+- **Providers** (swappable interface in `src/lib/tracking/`):
+  1. **indian-courier-api** — your self-hosted scraper service
+     (github.com/rajatdhoot123/indian-courier-api) when
+     `INDIAN_COURIER_API_URL` is set. See "Deploying the Indian courier
+     tracking service" below.
+  2. **AfterShip v9** (`aftership.ts`) when `AFTERSHIP_API_KEY` is set.
+  3. **mock** — clearly-labeled simulated timeline when neither is
+     configured, so the feature stays demoable locally.
+
+### Deploying the Indian courier tracking service
+
+The `indian-courier-api` repo is a **web scraper**: it launches a headless
+Chromium browser and scrapes AfterShip's public tracking pages. It therefore
+needs a Chromium-capable host — it **cannot** run on Cloudflare Workers.
+
+```bash
+git clone https://github.com/rajatdhoot123/indian-courier-api.git
+cd indian-courier-api
+npm install
+npm start        # or deploy to any Node/Chromium host (Render, VPS, …)
+```
+
+Then point our app at it:
+
+```
+INDIAN_COURIER_API_URL=https://your-tracking-service.example.com
+```
+
+Our app calls `GET {INDIAN_COURIER_API_URL}/api/track/{courier}/{trackingId}`
+and maps `{ data: [{ location, detail, date }] }` into the same timeline
+format as the other providers. Per the service's README, Ekart, Ecom,
+Delhivery, Bluedart, DTDC and DHL are reported working; Xpressbees, Gati
+and Shadowfax are marked NA. Checkpoints are de-duplicated and cached like
+any other provider.
 
 ## Roadmap
 

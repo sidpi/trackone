@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // OpenNext/Cloudflare build output (regenerated on `npm run deploy`):
     ".open-next/**",
+    // Agent workspace (vendored scratch, never part of the app):
+    ".freebuff/**",
   ]),
 ]);
 

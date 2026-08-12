@@ -83,6 +83,7 @@ export async function POST(request: Request) {
     result = await provider.track(slug, shipment.tracking_number, {
       title: shipment.nickname ?? undefined,
       createdAt: shipment.created_at,
+      courierName: shipment.courier,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Tracking request failed.";
