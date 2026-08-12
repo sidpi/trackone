@@ -26,6 +26,14 @@ const OTP_ERRORS: Array<[RegExp, string]> = [
     /for security purposes, you can only request this after/,
     "You've requested too many codes. Please wait a minute and try again.",
   ],
+  [
+    /over_email_send_rate_limit|email rate limit exceeded|rate limit/,
+    "We're sending too many codes right now — please wait about an hour and try again.",
+  ],
+  [
+    /email_address_invalid|email address .* is invalid|invalid email/,
+    "That email address looks invalid — double-check it and try again.",
+  ],
   [/email not confirmed/, "We couldn't verify that email. Request a new code and try again."],
   [/signups not allowed/, "New sign-ups aren't enabled on this site right now."],
   [/email provider is disabled/, "Email sign-in isn't enabled right now. Please try again later."],
