@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, TriangleAlert } from "lucide-react";
 
 import { ConnectedEmails } from "@/components/dashboard/connected-emails";
 import {
@@ -35,6 +35,15 @@ export default async function SettingsPage({
 
   const emails = (data ?? []) as ConnectedEmail[];
 
+  // Google OAuth (and the token encryption key) live in server secrets.
+  // Missing credentials are exactly what makes "Connect another email" show
+  // "not configured" in production while working fine locally — surface it
+  // up front instead of only after the user clicks the button.
+  const emailDiscoveryConfigured =
+    Boolean(process.env.GOOGLE_OAUTH_CLIENT_ID) &&
+    Boolean(process.env.GOOGLE_OAUTH_CLIENT_SECRET) &&
+    Boolean(process.env.EMAIL_TOKEN_ENCRYPTION_KEY);
+
   return (
     <div className="flex flex-col gap-6">
       <Link
@@ -51,6 +60,23 @@ export default async function SettingsPage({
           Manage the email accounts used for automatic shipment discovery.
         </p>
       </div>
+
+      {!emailDiscoveryConfigured && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-700 dark:text-amber-400">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+          <span>
+            Email connection isn&apos;t configured on this server yet. The owner
+            needs to set{" "}
+            <code className="font-mono">GOOGLE_OAUTH_CLIENT_ID</code>,{" "}
+            <code className="font-mono">GOOGLE_OAUTH_CLIENT_SECRET</code> and{" "}
+            <code className="font-mono">EMAIL_TOKEN_ENCRYPTION_KEY</code>{" "}
+            in the Worker environment — locally they live in{" "}
+            <code className="font-mono">.env.local</code> /{" "}
+            <code className="font-mono">.dev.vars</code>, and after deploying
+            you push them with <code className="font-mono">npm run secrets</code>.
+          </span>
+        </div>
+      )}
 
       <Card>
         <CardHeader>

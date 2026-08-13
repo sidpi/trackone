@@ -2,10 +2,17 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { Logo } from "@/components/logo";
+import { UserMenu } from "@/components/dashboard/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/server";
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
@@ -19,10 +26,21 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Button variant="default" render={<Link href="/login?next=/dashboard" />}>
-            Sign in
-            <ArrowRight data-icon="inline-end" />
-          </Button>
+          {user ? (
+            <UserMenu
+              name={
+                user.user_metadata?.full_name ??
+                user.email?.split("@")[0] ??
+                "User"
+              }
+              email={user.email ?? ""}
+            />
+          ) : (
+            <Button variant="default" render={<Link href="/login?next=/dashboard" />}>
+              Sign in
+              <ArrowRight data-icon="inline-end" />
+            </Button>
+          )}
         </div>
       </div>
     </header>

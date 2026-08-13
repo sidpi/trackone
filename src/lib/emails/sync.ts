@@ -10,6 +10,7 @@ import {
 } from "./gmail";
 import { refreshAccessToken } from "./oauth";
 import { matchingParsers, parseMessage } from "./parsers";
+import { refreshShipmentTracking } from "@/lib/tracking/refresh";
 import type { SyncResult, SyncStats } from "./types";
 
 /** Fatal sync failure — e.g. the user revoked access or the token expired. */
@@ -156,17 +157,21 @@ export async function syncConnectedEmail(
         continue;
       }
 
-      const { error: insertError } = await supabase.from("shipments").insert({
-        user_id: email.user_id,
-        tracking_number: parsed.trackingNumber,
-        courier: parsed.courier,
-        nickname: parsed.summary || parsed.merchant || null,
-        status: parsed.status ?? "pending",
-        source: "email",
-        source_email: email.email,
-        merchant: parsed.merchant ?? null,
-        estimated_delivery: parsed.estimatedDelivery ?? null,
-      });
+      const { data: createdRow, error: insertError } = await supabase
+        .from("shipments")
+        .insert({
+          user_id: email.user_id,
+          tracking_number: parsed.trackingNumber,
+          courier: parsed.courier,
+          nickname: parsed.summary || parsed.merchant || null,
+          status: parsed.status ?? "pending",
+          source: "email",
+          source_email: email.email,
+          merchant: parsed.merchant ?? null,
+          estimated_delivery: parsed.estimatedDelivery ?? null,
+        })
+        .select("id")
+        .single();
 
       if (insertError) {
         // Likely a race with the unique index — re-check and associate.
@@ -174,11 +179,22 @@ export async function syncConnectedEmail(
         continue;
       }
       byNumber.set(key, {
-        id: "created",
+        id: createdRow?.id ?? "created",
         tracking_number: parsed.trackingNumber,
         source_email: email.email,
       });
       stats.created += 1;
+
+      // Auto-refresh the discovered shipment so its status reflects the real
+      // courier position instead of the parser guess. Best effort — a
+      // provider hiccup is fine, the dashboard refreshes it later.
+      if (createdRow?.id) {
+        try {
+          await refreshShipmentTracking(supabase, createdRow.id);
+        } catch (err) {
+          console.error("Auto tracking refresh after email sync failed:", err);
+        }
+      }
     }
 
     // ── Record sync state ──

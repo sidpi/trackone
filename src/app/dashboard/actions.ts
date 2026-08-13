@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { COURIERS } from "@/lib/couriers";
 import { createClient } from "@/lib/supabase/server";
+import { refreshShipmentTracking } from "@/lib/tracking/refresh";
 import {
   SHIPMENT_STATUSES,
   type NewShipmentInput,
@@ -55,15 +56,31 @@ export async function createShipment(
     return { error: "You need to be signed in." };
   }
 
-  const { error } = await supabase.from("shipments").insert({
-    user_id: user.id,
-    tracking_number: trackingNumber,
-    courier,
-    nickname: nickname || null,
-  });
+  const { data: created, error } = await supabase
+    .from("shipments")
+    .insert({
+      user_id: user.id,
+      tracking_number: trackingNumber,
+      courier,
+      nickname: nickname || null,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Auto-refresh the brand-new shipment so the status shows the live courier
+  // position immediately — no manual "Refresh tracking" click needed. Best
+  // effort: a provider hiccup must not fail the shipment creation (the
+  // dashboard auto-refreshes any shipment that still has no tracking data).
+  if (created?.id) {
+    try {
+      await refreshShipmentTracking(supabase, created.id);
+    } catch (err) {
+      console.error("Auto tracking refresh after create failed:", err);
+    }
   }
 
   revalidatePath("/dashboard");

@@ -1,22 +1,20 @@
 import { NextResponse } from "next/server";
 
+import { refreshShipmentTracking } from "@/lib/tracking/refresh";
 import { createClient } from "@/lib/supabase/server";
-import {
-  getTrackingProvider,
-  isTrackingFresh,
-  mapTagToStatus,
-} from "@/lib/tracking";
-import type { TrackingHistoryEntry } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 /**
- * POST /api/tracking/refresh  { shipmentId }
+ * POST /api/tracking/refresh  { shipmentId, force? }
  *
  * Securely refreshes tracking for ONE of the signed-in user's own
  * shipments: ownership is enforced by RLS + an explicit id lookup, and the
  * courier API key never leaves the server environment. A simple cache
- * (tracking_checked_at within TTL) skips the external call when fresh.
+ * (tracking_checked_at within TTL) skips the external call when fresh —
+ * an explicit user click (force: true) always re-checks with the courier.
+ * The heavy lifting lives in src/lib/tracking/refresh.ts, shared with the
+ * create-shipment action and the email sync engine.
  */
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -40,168 +38,21 @@ export async function POST(request: Request) {
   // to automatic/programmatic refreshes.
   const force = body?.force === true;
 
-  // RLS scopes this to the user's own rows.
-  const { data: shipment, error: fetchError } = await supabase
-    .from("shipments")
-    .select("*")
-    .eq("id", shipmentId)
-    .maybeSingle();
+  const outcome = await refreshShipmentTracking(supabase, shipmentId, { force });
 
-  if (fetchError) {
-    console.error("Failed to load shipment for tracking:", fetchError.message);
+  if (!outcome.ok) {
     return NextResponse.json(
-      { error: "Could not load the shipment." },
-      { status: 500 }
-    );
-  }
-  if (!shipment) {
-    return NextResponse.json(
-      { error: "Shipment not found." },
-      { status: 404 }
-    );
-  }
-
-  // ── Load existing history (needed for dedupe + cache check) ──
-  const { data: existing, error: historyError } = await supabase
-    .from("tracking_history")
-    .select("occurred_at, message")
-    .eq("shipment_id", shipmentId);
-
-  if (historyError) {
-    // Almost always means the 0002_tracking.sql migration hasn't been run.
-    console.error("Failed to load tracking history:", historyError.message);
-    return NextResponse.json(
-      {
-        error:
-          "Tracking fetched, but the tracking database isn't set up yet — run sql/0002_tracking.sql in Supabase (SQL Editor).",
-        detail: historyError.message,
-      },
-      { status: 500 }
-    );
-  }
-
-  const history = existing ?? [];
-
-  // ── Simple cache: skip the external API when recently synced AND the
-  //    timeline actually has data (self-heals shipments whose earlier
-  //    refresh saved nothing). An explicit user click (force) bypasses it. ──
-  if (
-    !force &&
-    isTrackingFresh(shipment.tracking_checked_at) &&
-    history.length > 0
-  ) {
-    return NextResponse.json({
-      shipmentId,
-      cached: true,
-      provider: getTrackingProvider().name,
-      lastChecked: shipment.tracking_checked_at,
-    });
-  }
-
-  // ── Call the courier API ──
-  const provider = getTrackingProvider();
-  let result;
-  try {
-    result = await provider.track(shipment.tracking_number, {
-      createdAt: shipment.created_at,
-      courierName: shipment.courier,
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Tracking request failed.";
-    console.error("Tracking refresh failed:", message);
-
-    // Persist the error so the details page can show it; tracking_checked_at
-    // is left untouched so retries are always allowed.
-    await supabase
-      .from("shipments")
-      .update({ tracking_error: message })
-      .eq("id", shipmentId);
-
-    return NextResponse.json({ error: message }, { status: 502 });
-  }
-
-  // ── Dedupe + insert timeline entries ──
-  const seen = new Set(
-    history.map((h: Pick<TrackingHistoryEntry, "occurred_at" | "message">) =>
-      `${h.occurred_at}|${h.message}`
-    )
-  );
-
-  const newCheckpoints = result.checkpoints.filter(
-    (c) => !seen.has(`${c.occurredAt}|${c.message}`)
-  );
-
-  if (newCheckpoints.length > 0) {
-    const { error: insertError } = await supabase
-      .from("tracking_history")
-      .insert(
-        newCheckpoints.map((c) => ({
-          shipment_id: shipmentId,
-          status: mapTagToStatus(c.tag),
-          message: c.message,
-          location: c.location,
-          occurred_at: c.occurredAt,
-          raw: c.raw ?? null,
-        }))
-      );
-
-    if (insertError) {
-      console.error("Failed to persist tracking history:", insertError.message);
-      return NextResponse.json(
-        { error: "Tracking fetched, but saving history failed." },
-        { status: 500 }
-      );
-    }
-  }
-
-  // ── Update shipment status + cache ──
-  const latestTag = result.checkpoints.at(-1)?.tag ?? result.tag;
-  let status = mapTagToStatus(latestTag);
-  // Terminal-delivery rule: a package whose timeline contains a delivered
-  // checkpoint IS delivered, even when the provider's newest entry is a
-  // stale "in transit" row or a delivery without a reliable timestamp.
-  // Only a later cancelled/returned checkpoint overrides it.
-  const deliveredIndex = result.checkpoints.findIndex(
-    (c) => mapTagToStatus(c.tag) === "delivered"
-  );
-  if (deliveredIndex !== -1) {
-    const laterCancelled = result.checkpoints
-      .slice(deliveredIndex + 1)
-      .some((c) => mapTagToStatus(c.tag) === "cancelled");
-    if (!laterCancelled) status = "delivered";
-  }
-
-  const { error: updateError } = await supabase
-    .from("shipments")
-    .update({
-      status,
-      tracking_raw: result.raw,
-      tracking_checked_at: new Date().toISOString(),
-      tracking_error: null,
-    })
-    .eq("id", shipmentId);
-
-  if (updateError) {
-    console.error("Failed to update shipment status:", updateError.message);
-    // Best effort: persist the error so the details page can show it.
-    await supabase
-      .from("shipments")
-      .update({ tracking_error: updateError.message })
-      .eq("id", shipmentId);
-    return NextResponse.json(
-      {
-        error: "Tracking fetched, but updating the shipment failed.",
-        detail: updateError.message,
-      },
-      { status: 500 }
+      { error: outcome.error, detail: outcome.detail },
+      { status: outcome.httpStatus }
     );
   }
 
   return NextResponse.json({
-    shipmentId,
-    cached: false,
-    provider: provider.name,
-    added: newCheckpoints.length,
-    status,
+    shipmentId: outcome.shipmentId,
+    cached: outcome.cached,
+    provider: outcome.provider,
+    added: outcome.added,
+    status: outcome.status,
+    lastChecked: outcome.lastChecked,
   });
 }

@@ -3,10 +3,12 @@ import Link from "next/link";
 import { Boxes } from "lucide-react";
 
 import { AddShipmentButton } from "@/components/dashboard/add-shipment-button";
+import { ShipmentsAutoRefresh } from "@/components/dashboard/shipments-auto-refresh";
 import { ShipmentsTable } from "@/components/dashboard/shipments-table";
 import { SyncNowButton } from "@/components/dashboard/sync-now-button";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
+import { isTrackingFresh } from "@/lib/tracking";
 import type { ShipmentStatus, ShipmentWithTracking } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +57,20 @@ export default async function DashboardPage({
 
   const rows = (shipments ?? []) as ShipmentWithTracking[];
 
+  // Shipments that should auto-refresh in the background after this page
+  // renders: anything never checked (e.g. created before auto-sync, or whose
+  // first check failed) plus stale non-terminal shipments. Terminal statuses
+  // (delivered / cancelled) are not re-checked to keep provider quota low.
+  const autoRefreshIds = rows
+    .filter((s) => {
+      if (!s.tracking_checked_at) return true;
+      if (s.status === "delivered" || s.status === "cancelled") return false;
+      return !isTrackingFresh(s.tracking_checked_at);
+    })
+    // Bound the per-visit work so a big list can't stall the page.
+    .slice(0, 10)
+    .map((s) => s.id);
+
   const { count: emailCount } = await supabase
     .from("connected_emails")
     .select("id", { count: "exact", head: true });
@@ -64,9 +80,10 @@ export default async function DashboardPage({
       {/* Toolbar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-semibold tracking-tight">Shipments</h1>
             <Badge variant="secondary">Tracks 1–4 · Live</Badge>
+            <ShipmentsAutoRefresh shipmentIds={autoRefreshIds} />
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {rows.length === 0

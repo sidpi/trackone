@@ -38,6 +38,12 @@ export default async function DashboardLayout({
             <Link href="/terms" className="transition-colors hover:text-foreground">
               Terms of Service
             </Link>
+            <a
+              href="mailto:sidhantaadityan@outlook.com"
+              className="transition-colors hover:text-foreground"
+            >
+              Contact
+            </a>
           </nav>
         </div>
       </footer>
