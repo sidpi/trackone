@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, LogOut, Settings } from "lucide-react";
+import { LayoutDashboard, Loader2, LogOut, Settings } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -67,6 +67,13 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer"
+          render={<Link href="/dashboard" />}
+        >
+          <LayoutDashboard />
+          Dashboard
+        </DropdownMenuItem>
         <DropdownMenuItem
           className="cursor-pointer"
           render={<Link href="/dashboard/settings" />}
