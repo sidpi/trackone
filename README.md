@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="ShipTrack — Shipment tracking, simplified" width="100%" />
+  <img src="assets/banner.png" alt="ShipTrack — Shipment tracking, simplified" width="100%" />
 </p>
 
 <p align="center">
