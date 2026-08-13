@@ -36,6 +36,9 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
+  // An explicit user click always hits the courier; the cache only applies
+  // to automatic/programmatic refreshes.
+  const force = body?.force === true;
 
   // RLS scopes this to the user's own rows.
   const { data: shipment, error: fetchError } = await supabase
@@ -81,8 +84,12 @@ export async function POST(request: Request) {
 
   // ── Simple cache: skip the external API when recently synced AND the
   //    timeline actually has data (self-heals shipments whose earlier
-  //    refresh saved nothing). ──
-  if (isTrackingFresh(shipment.tracking_checked_at) && history.length > 0) {
+  //    refresh saved nothing). An explicit user click (force) bypasses it. ──
+  if (
+    !force &&
+    isTrackingFresh(shipment.tracking_checked_at) &&
+    history.length > 0
+  ) {
     return NextResponse.json({
       shipmentId,
       cached: true,
@@ -149,10 +156,25 @@ export async function POST(request: Request) {
 
   // ── Update shipment status + cache ──
   const latestTag = result.checkpoints.at(-1)?.tag ?? result.tag;
+  let status = mapTagToStatus(latestTag);
+  // Terminal-delivery rule: a package whose timeline contains a delivered
+  // checkpoint IS delivered, even when the provider's newest entry is a
+  // stale "in transit" row or a delivery without a reliable timestamp.
+  // Only a later cancelled/returned checkpoint overrides it.
+  const deliveredIndex = result.checkpoints.findIndex(
+    (c) => mapTagToStatus(c.tag) === "delivered"
+  );
+  if (deliveredIndex !== -1) {
+    const laterCancelled = result.checkpoints
+      .slice(deliveredIndex + 1)
+      .some((c) => mapTagToStatus(c.tag) === "cancelled");
+    if (!laterCancelled) status = "delivered";
+  }
+
   const { error: updateError } = await supabase
     .from("shipments")
     .update({
-      status: mapTagToStatus(latestTag),
+      status,
       tracking_raw: result.raw,
       tracking_checked_at: new Date().toISOString(),
       tracking_error: null,
@@ -180,6 +202,6 @@ export async function POST(request: Request) {
     cached: false,
     provider: provider.name,
     added: newCheckpoints.length,
-    status: mapTagToStatus(latestTag),
+    status,
   });
 }

@@ -15,10 +15,12 @@ export function TrackingRefreshButton({ shipmentId }: { shipmentId: string }) {
   async function handleRefresh() {
     setIsPending(true);
     try {
+      // force: an explicit click must always re-check with the courier
+      // instead of serving the 15-minute cache.
       const res = await fetch("/api/tracking/refresh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shipmentId }),
+        body: JSON.stringify({ shipmentId, force: true }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
