@@ -1,140 +1,269 @@
-# ShipTrack — Shipment Tracking App
+<p align="center">
+  <img src="assets/banner.svg" alt="ShipTrack — Shipment tracking, simplified" width="100%" />
+</p>
 
-**Track 1:** polished landing page + working login + protected dashboard shell.
-**Track 2:** full shipments CRUD — create, edit, delete, and status badges,
-with per-user Row Level Security.
-**Track 3:** courier tracking — TrackCourier.io + Ship24 integration with a
-status timeline, caching, and error handling.
-**Track 4:** automatic shipment discovery — connect multiple email accounts
-(OAuth) and shipments are extracted from order emails automatically.
+<p align="center">
+  <b>One clean dashboard for every shipment.</b><br/>
+  Know where your cargo is, what's next, and who's handling it — without the spreadsheet chaos.
+</p>
 
-A Next.js (App Router) web app for tracking shipments, built with TypeScript,
-Tailwind CSS, shadcn/ui, and Supabase (Auth + Postgres). Deployed to
-**Cloudflare** via the OpenNext adapter, behind the custom domain
-**`track.sidcandev.online`** (a subdomain of `sidcandev.online`).
-
----
-
-## Tech stack
-
-| Layer      | Choice                                                        |
-| ---------- | ------------------------------------------------------------- |
-| Framework  | Next.js 16 (App Router, React 19, TypeScript)                 |
-| Styling    | Tailwind CSS v4 + shadcn/ui (Base UI components)              |
-| Auth       | Supabase Auth via `@supabase/ssr` (email OTP / magic link)    |
-| Database   | PostgreSQL hosted on Supabase (RLS-ready, schema in `sql/`)   |
-| Hosting    | Cloudflare (Workers runtime) via `@opennextjs/cloudflare`     |
-| Domain     | `track.sidcandev.online`                                     |
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white&style=flat-square" alt="Next.js 16"/>
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white&style=flat-square" alt="React 19"/>
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript 5"/>
+  <img src="https://img.shields.io/badge/Tailwind%20CSS-v4-06B6D4?logo=tailwindcss&logoColor=white&style=flat-square" alt="Tailwind CSS v4"/>
+  <img src="https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white&style=flat-square" alt="Supabase"/>
+  <img src="https://img.shields.io/badge/Cloudflare-F38020?logo=cloudflare&logoColor=white&style=flat-square" alt="Cloudflare"/>
+</p>
 
 ---
 
-## Getting started
+## ✨ Features
 
-### 1. Prerequisites
+- **Shipment tracking** — unified dashboard with status badges, filters, and a per-shipment tracking timeline.
+- **Live courier status** — TrackCourier.io and Ship24 integrations with automatic provider **failover**, 15-minute caching, and graceful error states.
+- **Automatic email discovery** — connect Gmail accounts (Google OAuth, read-only) and orders are detected and tracked automatically via modular parsers for Amazon, Flipkart, Myntra, Meesho, major couriers, and any brand (generic fallback).
+- **Passwordless auth** — Supabase email OTP / magic-link sign-in, no passwords to store or leak.
+- **Privacy by design** — Row Level Security keeps every user's data isolated; OAuth tokens are encrypted at rest (AES-256-GCM); courier API keys never leave the server.
+- **Deployed on Cloudflare** — OpenNext Cloudflare adapter, Workers runtime, custom domain, static asset caching.
 
-- Node.js **20+** (this repo was scaffolded with Node 26)
+## 📖 Table of contents
+
+- [Tech stack](#-tech-stack)
+- [Getting started](#-getting-started)
+- [Environment variables](#-environment-variables)
+- [Scripts](#-scripts)
+- [Deployment](#-deployment)
+- [Features](#-features)
+- [Security model](#-security-model)
+- [Project structure](#-project-structure)
+- [Common issues](#-common-issues)
+- [Roadmap](#-roadmap)
+
+---
+
+## 🧱 Tech stack
+
+| Layer     | Choice                                                                  |
+| --------- | ----------------------------------------------------------------------- |
+| Framework | Next.js 16 (App Router, React 19, TypeScript)                           |
+| Styling   | Tailwind CSS v4 + [shadcn/ui](https://ui.shadcn.com) (Base UI components) |
+| Auth      | Supabase Auth via `@supabase/ssr` (email OTP / magic link)              |
+| Database  | PostgreSQL on Supabase (Row Level Security, schema in [`sql/`](sql/))   |
+| Hosting   | Cloudflare Workers via [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) |
+| Integrations | TrackCourier.io · Ship24 · Gmail API (Google OAuth)                  |
+
+---
+
+## 🚀 Getting started
+
+### Prerequisites
+
+- Node.js **20+**
 - npm
 - A [Supabase](https://supabase.com) project (free tier is fine)
-- A [Cloudflare](https://dash.cloudflare.com) account with the
-  `sidcandev.online` domain attached (for deployment — we use the
-  `track.` subdomain)
+- A [Cloudflare](https://dash.cloudflare.com) account for deployment
 
-### 2. Install dependencies
+### 1. Install
 
 ```bash
 npm install
 ```
 
-### 3. Configure environment variables
+### 2. Configure environment variables
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env.local      # local dev (Supabase + build-time values)
+cp .dev.vars.example .dev.vars  # Cloudflare runtime secrets (preview/deploy)
 ```
 
-Fill in the Supabase values (see below). For Cloudflare preview/deploy also:
+Fill in your values — see the [Environment variables](#-environment-variables) section.
 
-```bash
-cp .dev.vars.example .dev.vars
-```
+> `.env.local` and `.dev.vars` are gitignored. The Supabase **anon key** is
+> safe to expose in the browser — real security comes from Postgres Row
+> Level Security. Never commit provider keys or OAuth secrets.
 
-> `.env.local` is gitignored. The Supabase **anon key** is safe to expose in
-> the browser — real security comes from Postgres Row Level Security.
-
-### 4. Set up Supabase
+### 3. Set up Supabase
 
 1. Create a project at [supabase.com/dashboard](https://supabase.com/dashboard).
-2. **Authentication → Providers → Email** — make sure "Email" is enabled.
+2. **Authentication → Providers → Email** — enable **Email** with **"Enable email signups"** on.
 3. **Authentication → URL Configuration** — add your site URLs:
    - Local: `http://localhost:3000`
    - Production: `https://track.sidcandev.online`
-4. Copy the project URL + anon key from **Project Settings → API** into
-   `.env.local`:
+4. Copy the project URL and anon key from **Project Settings → API** into `.env.local`.
+5. Run the migrations in [`sql/`](sql/README.md) from the **SQL Editor** (`0001` → `0005`, in order).
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
-   ```
-
-5. **Authentication is public by default**: **Auth → Providers → Email**
-   must be enabled, with **"Enable email signups"** on. Anyone who visits
-   the site can create an account with their email — no passwords involved.
-   Sign-in uses **email OTP / magic link**: the user enters their email,
-   receives a 6-digit code, and is signed in.
-
-> Using the Supabase CLI locally instead? Run `supabase start` and point
-> `NEXT_PUBLIC_SUPABASE_URL` at `http://127.0.0.1:54321` (anon key is
-> `eyJhbGciOi...` printed by the CLI).
-
-### 5. Run locally
+### 4. Run locally
 
 ```bash
 npm run dev
 ```
 
-Open http://localhost:3000 → **Sign in** → enter any email → enter the
-6-digit code from the inbox. New users are created automatically; returning
-users land back on their existing dashboard.
+Open http://localhost:3000 → **Sign in** → enter your email → enter the 6-digit
+code from your inbox. New users are created automatically; returning users land
+back on their existing dashboard.
+
+> Using the Supabase CLI instead? Run `supabase start` and point
+> `NEXT_PUBLIC_SUPABASE_URL` at `http://127.0.0.1:54321`.
 
 ---
 
-## What's inside
+## 🔐 Environment variables
 
-| Route                 | Description                                              |
-| --------------------- | -------------------------------------------------------- |
-| `/`                   | Landing page (hero, features, CTA)                      |
-| `/privacy`            | Privacy Policy page (contact: sidhantaadityan@outlook.com) |
-| `/terms`              | Terms of Service page (contact: sidhantaadityan@outlook.com) |
-| `/login`              | Sign-in page (Supabase email OTP / magic link)           |
-| `/dashboard`          | Protected dashboard: unified shipment list, filters, Sync Now, create/edit/delete |
-| `/dashboard/shipments/[id]` | Shipment details: tracking timeline, refresh, error states |
-| `/dashboard/settings` | Settings: connected email accounts (sync, disconnect)   |
-| `/api/tracking/refresh`    | Secure serverless fn: fetches courier status, updates history |
-| `/api/emails/connect`      | Starts Google OAuth for connecting an email account     |
-| `/api/emails/callback`     | OAuth callback: stores encrypted token, saves connection |
-| `/api/emails/sync`         | Syncs one or all connected emails (also cron entry point) |
-| `/api/emails/disconnect`   | Disconnects an email (keeps discovered shipments)       |
-| `/auth/callback`      | OAuth/magic-link code exchange (ready for future providers) |
-| `/auth/signout`       | POST route that signs the user out                       |
+| Variable                       | Where        | Secret | Purpose                                            |
+| ------------------------------ | ------------ | :----: | -------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`     | Build + Worker |       | Supabase project URL (inlined at build time)       |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`| Build + Worker |       | Supabase anon key (public by design, RLS protects) |
+| `TRACKCOURIER_API_KEY`         | Runtime      |   ✅   | TrackCourier.io API key (free tier: 100 req/mo)    |
+| `SHIP24_API_KEY`               | Runtime      |   ✅   | Ship24 API key                                     |
+| `INDIAN_COURIER_API_URL`       | Runtime      |       | URL of your self-hosted indian-courier-api service |
+| `TRACKING_CACHE_TTL_MINUTES`   | Runtime      |       | Tracking cache TTL in minutes (default `15`)       |
+| `GOOGLE_OAUTH_CLIENT_ID`       | Runtime      |       | Google OAuth client ID (email discovery)           |
+| `GOOGLE_OAUTH_CLIENT_SECRET`   | Runtime      |   ✅   | Google OAuth client secret                         |
+| `EMAIL_TOKEN_ENCRYPTION_KEY`   | Runtime      |   ✅   | 32-byte base64 key to encrypt OAuth tokens at rest |
 
-### Auth flow
+- **`NEXT_PUBLIC_*`** values are inlined at **build time** — set them in the
+  build environment (CI or the shell running the build) *and* on the Worker.
+- **Runtime secrets** are read server-side only — store them as Cloudflare
+  Worker **secrets**, never in code or build variables.
+- Without any courier keys the app falls back to a clearly-labeled **mock**
+  provider so the feature stays demoable.
 
-- `src/middleware.ts` (Edge runtime) refreshes the Supabase session on every
-  request and redirects anonymous users away from `/dashboard`.
-- Server Components use `src/lib/supabase/server.ts` (cookie-based client);
-  the dashboard layout double-checks the session server-side.
-- Client Components use `src/lib/supabase/client.ts`.
+Generate the encryption key:
 
-### Why `middleware.ts` and not Next 16's `proxy.ts`?
-
-Next 16 renamed middleware to `proxy.ts` and made it default to the **Node.js
-runtime**. The OpenNext Cloudflare adapter does not support Node middleware
-yet, so this repo keeps the legacy `middleware.ts` convention (Edge runtime),
-which OpenNext fully supports. When OpenNext adds `proxy.ts` support, rename
-the file and function (`middleware` → `proxy`) — no other changes needed.
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
 
 ---
 
-## Folder structure
+## 🧰 Scripts
+
+| Command           | What it does                                          |
+| ----------------- | ----------------------------------------------------- |
+| `npm run dev`     | Next.js dev server (Node runtime)                     |
+| `npm run build`   | Standard Next.js production build                     |
+| `npm run lint`    | ESLint                                                |
+| `npm run preview` | OpenNext build + run locally on the Workers runtime   |
+| `npm run deploy`  | OpenNext build + deploy to Cloudflare                 |
+| `npm run upload`  | OpenNext build + upload a new version                 |
+| `npm run secrets` | Upload `.dev.vars` runtime vars to the Worker as secrets |
+
+> ⚠️ **`npm run deploy` does NOT upload `.dev.vars` to the Worker.** The
+> "Using secrets defined in .dev.vars" line in deploy output only means
+> wrangler *read* the file locally. After adding or changing a runtime var,
+> run **`npm run secrets`** (with `CLOUDFLARE_API_TOKEN` set) to push the
+> values to the Worker as secrets.
+
+---
+
+## ☁️ Deployment
+
+The app deploys to **Cloudflare Workers** via the OpenNext adapter and serves
+from `https://track.sidcandev.online` (declared as a custom domain route in
+[`wrangler.jsonc`](wrangler.jsonc)).
+
+### First deploy
+
+```bash
+npm run deploy
+```
+
+Wrangler will ask you to log in to Cloudflare once. The Worker is named
+`shipmenttracker`.
+
+### Set production secrets
+
+In the Worker dashboard → **Settings → Variables and Secrets**, add the
+runtime vars from the [table above](#-environment-variables) as secrets.
+Or push them from your machine:
+
+```bash
+CLOUDFLARE_API_TOKEN=... npm run secrets
+```
+
+### Continuous deployment (recommended)
+
+Cloudflare Dashboard → **Workers & Pages → Create → Connect to Git**. Cloudflare
+builds with `npm run deploy` on every push to the production branch. Keep
+secrets in the Worker's **Variables and Secrets** settings — they never enter
+the repo.
+
+> **Windows note:** OpenNext works on Windows but is only *fully supported* on
+> Linux/macOS. If you hit local build issues, use WSL or the GitHub →
+> Cloudflare CI path.
+
+---
+
+## 🧭 Features
+
+### Shipments (CRUD)
+
+Add, edit, and delete shipments with a status badge (`pending`,
+`in_transit`, `out_for_delivery`, `customs`, `delivered`, `cancelled`).
+Mutations run through server actions with input validation; `user_id` is
+always taken from the session, so no user can ever create rows for someone
+else. Schema + RLS policies live in [`sql/0001_shipments.sql`](sql/0001_shipments.sql).
+
+### Courier tracking
+
+Each shipment's details page shows a tracking timeline. **Refresh tracking**
+calls a secure serverless function that:
+
+- Only refreshes shipments owned by the signed-in user (RLS + explicit lookup),
+- Keeps courier API keys on the server,
+- Dedupes new checkpoints into `tracking_history`,
+- Caches successful refreshes for `TRACKING_CACHE_TTL_MINUTES` (default 15),
+- Persists provider errors and surfaces them with proper HTTP codes.
+
+Providers are a swappable chain (see [`src/lib/tracking/`](src/lib/tracking/)):
+
+1. **TrackCourier.io** — Indian-first, 25+ couriers (set `TRACKCOURIER_API_KEY`)
+2. **Ship24** — global aggregator with courier auto-detection (set `SHIP24_API_KEY`)
+3. **indian-courier-api** — self-hosted scraper (set `INDIAN_COURIER_API_URL`)
+4. **mock** — simulated timeline when none are configured
+
+When multiple real providers are set they form a **failover chain** — each is
+tried in order until one returns data.
+
+> ⚠️ The `indian-courier-api` scraper targets AfterShip's pre-2023 DOM and
+> **does not currently work** against their redesigned site. TrackCourier.io
+> and Ship24 are the supported path.
+
+### Automatic email discovery
+
+Connect Gmail accounts (Google OAuth, `gmail.readonly` scope) and shipment
+emails are discovered automatically:
+
+1. **Scan** — recent Gmail messages matching shipment keywords (cheap headers only).
+2. **Parse** — modular parsers for Amazon, Flipkart, Myntra, Meesho, major
+   couriers, plus a **generic fallback** that catches any brand.
+3. **Dedupe** — tracking numbers already on the dashboard are associated, never duplicated.
+4. **Create** — new shipments get `source = 'email'`, the merchant, and estimated delivery.
+
+Setup steps: enable the **Gmail API**, create a **Web application** OAuth
+client in Google Cloud Console with redirect URI
+`{your-origin}/api/emails/callback`, and set the Google vars + encryption key.
+Details in [`.env.example`](.env.example).
+
+Sync is idempotent and can run on a schedule later by pointing a Cloudflare
+**Cron Trigger** at `POST /api/emails/sync` (protect it with a service token).
+
+---
+
+## 🛡️ Security model
+
+| Layer              | How it's handled                                                                   |
+| ------------------ | ---------------------------------------------------------------------------------- |
+| Auth               | Passwordless email OTP. Session cookies via `@supabase/ssr`, refreshed by Edge middleware. |
+| Authorization      | Every dashboard page *and* API route validates the session server-side.            |
+| Data isolation     | Postgres **Row Level Security** on `shipments` and `connected_emails` (see [`sql/`](sql/)). |
+| OAuth tokens       | Refresh tokens encrypted at rest (**AES-256-GCM**, key in `EMAIL_TOKEN_ENCRYPTION_KEY`); access tokens live in memory only. Tokens are never sent to the browser. |
+| Email data         | Only tracking facts are stored — email bodies are parsed in memory and discarded.  |
+| API keys           | Courier keys live in Worker secrets and are read server-side only.                 |
+| OAuth CSRF         | `state` param + HttpOnly cookie, 10-minute expiry.                                 |
+
+## 🗂️ Project structure
 
 ```
 .
@@ -142,430 +271,62 @@ the file and function (`middleware` → `proxy`) — no other changes needed.
 │   ├── app/                     # App Router routes
 │   │   ├── layout.tsx           # Root layout (fonts, theme, toaster)
 │   │   ├── page.tsx             # Landing page
-│   │   ├── login/page.tsx       # Sign-in page
-│   │   ├── dashboard/           # Protected area
-│   │   │   ├── layout.tsx       # Auth guard + app shell
-│   │   │   ├── page.tsx         # Fetches shipments (RLS), renders list
-│   │   │   ├── actions.ts       # Server actions: create/update/delete
-│   │   │   ├── settings/        # Connected Emails settings page
-│   │   └── shipments/[id]/  # Details page + tracking timeline
-│   │   ├── api/emails/      # connect / callback / sync / disconnect
-│   │   ├── api/tracking/refresh/route.ts  # Serverless tracking refresher
-│   │   └── auth/                # Auth route handlers
-│   │       ├── callback/route.ts
-│   │       └── signout/route.ts
-│   ├── components/
-│   │   ├── ui/                  # shadcn/ui components (generated)
-│   │   ├── landing/             # Landing page sections
-│   │   ├── auth/                # Login form
-│   │   └── dashboard/           # Shipment dialog, table, status badge,
-│   │                            # timeline, refresh button, row actions
+│   │   ├── login/               # Passwordless sign-in
+│   │   ├── dashboard/           # Protected app shell, shipments, settings
+│   │   ├── api/tracking/refresh # Serverless courier refresh
+│   │   ├── api/emails/          # Gmail connect / callback / sync / disconnect
+│   │   └── auth/                # OTP callback + signout handlers
+│   ├── components/              # shadcn/ui, landing, auth, dashboard
 │   ├── lib/
-│   │   ├── utils.ts             # cn() helper
-│   │   ├── format.ts            # timeAgo / formatDateTime
-│   │   ├── types.ts             # Shipment + tracking types
-│   │   ├── couriers.ts          # Courier list (slugs live in providers)
-│   │   ├── tracking/            # Providers (types, index, infer, mock,
-│   │   │                        # trackcourier.ts, ship24.ts)
-│   │   ├── emails/              # Email discovery (Track 4): OAuth, Gmail
-│   │   │   │                    # client, encryption, sync engine, and the
-│   │   │   └── parsers/         # modular parsers (Amazon, Flipkart, …, + a
-│   │   │                        # generic fallback for any brand)
-│   │   └── supabase/            # client.ts, server.ts
+│   │   ├── tracking/            # Courier providers + refresh engine
+│   │   ├── emails/              # OAuth, Gmail client, encryption, sync + parsers
+│   │   └── supabase/            # server + client clients
 │   └── middleware.ts            # Session refresh + route guard (Edge)
-├── sql/                         # Postgres migrations
-│   ├── README.md
-│   ├── 0001_shipments.sql       # shipments table + RLS (Track 2)
-│   ├── 0002_tracking.sql        # history table + cache cols (Track 3)
-│   ├── 0003_out_for_delivery.sql # distinct "out for delivery" status
-│   ├── 0004_email_discovery.sql # connected emails + source cols (Track 4)
-│   └── 0005_fix_email_parser_status.sql # fix parser status false positives
-├── public/_headers              # Static asset caching (Cloudflare)
+├── sql/                         # Postgres migrations (0001 → 0005)
+├── public/                      # Static assets, manifest, icons
 ├── wrangler.jsonc               # OpenNext / Wrangler config
-├── .env.example                 # Documented env vars
-├── .dev.vars.example            # Wrangler local runtime vars
-└── next.config.ts
+└── .env.example                 # Documented env vars
 ```
+
+> **Why `middleware.ts` and not Next 16's `proxy.ts`?** Next 16 renamed
+> middleware to `proxy.ts` and made it default to the Node runtime, which the
+> OpenNext Cloudflare adapter doesn't support yet. This repo keeps the legacy
+> `middleware.ts` (Edge runtime), which OpenNext fully supports. When OpenNext
+> adds `proxy.ts` support, rename the file and `middleware` → `proxy`.
 
 ---
 
-## Scripts
-
-| Command             | What it does                                        |
-| ------------------- | --------------------------------------------------- |
-| `npm run dev`       | Next.js dev server (Node runtime)                   |
-| `npm run build`     | Standard Next.js production build                   |
-| `npm run lint`      | ESLint                                              |
-| `npm run preview`   | OpenNext build + run locally on the Workers runtime |
-| `npm run deploy`    | OpenNext build + deploy to Cloudflare               |
-| `npm run upload`    | OpenNext build + upload a new version               |
-| `npm run secrets`   | Upload `.dev.vars` runtime vars to the Worker as secrets |
-
----
-
-## Deployment — Cloudflare (custom domain: track.sidcandev.online)
-
-The app deploys with the **OpenNext Cloudflare adapter**, which runs Next.js
-on Cloudflare's Workers runtime. Workers supports custom domains directly.
-
-### 1. First deploy from your machine
-
-Make sure `.env.local` has the Supabase values (they're inlined at build
-time), then:
-
-```bash
-npm run deploy
-```
-
-Wrangler will ask you to log in to Cloudflare once. The Worker is named
-`shipmenttracker` (see `wrangler.jsonc`).
-
-### 2. Attach your custom domain
-
-In the Cloudflare dashboard → **Workers & Pages → shipmenttracker →
-Settings → Domains & Routes**:
-
-1. **Custom Domains** → *Add* → enter `track.sidcandev.online`. Because the
-   parent domain is already on Cloudflare, the DNS record is created
-   automatically (this is also declared in `wrangler.jsonc` below).
-
-Or declare it in `wrangler.jsonc` (already included in this repo):
-
-```jsonc
-"routes": [{ "pattern": "track.sidcandev.online", "custom_domain": true }]
-```
-
-> Tip: if you ever want the app at the root domain too, add a second route
-> with `"pattern": "sidcandev.online"` and update the Supabase redirect URLs.
-
-### 3. Environment variables in production
-
-In the Worker dashboard → **Settings → Variables and Secrets**:
-
-| Variable                       | Type    | Value                                       |
-| ------------------------------ | ------- | ------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`     | Text    | your Supabase project URL                   |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`| Text    | your Supabase anon key                      |
-| `NEXT_PUBLIC_SITE_URL`         | Text    | `https://track.sidcandev.online`            |
-| `TRACKCOURIER_API_KEY`         | Secret  | your TrackCourier.io API key                |
-| `SHIP24_API_KEY`               | Secret  | your Ship24 API key                         |
-| `INDIAN_COURIER_API_URL`       | Text    | URL of your hosted indian-courier-api service |
-| `TRACKING_CACHE_TTL_MINUTES`   | Text    | `15` (optional)                             |
-| `GOOGLE_OAUTH_CLIENT_ID`       | Text    | Google OAuth client id (email discovery)    |
-| `GOOGLE_OAUTH_CLIENT_SECRET`   | Secret  | Google OAuth client secret                  |
-| `EMAIL_TOKEN_ENCRYPTION_KEY`   | Secret  | 32-byte base64 key to encrypt tokens        |
-
-`NEXT_PUBLIC_*` values are also inlined at **build** time — if you build in
-CI, set them there too. Provider keys are **runtime secrets**: store them as
-Worker secrets (never in code or build vars). Without any keys the app falls
-back to the demo/mock provider.
-
-> ⚠️ **`npm run deploy` does NOT upload `.dev.vars` to the Worker.** The
-> "Using secrets defined in .dev.vars" line in the deploy output is wrangler
-> telling you it *read* the file locally — it is not uploaded. After adding
-> or changing a runtime var in `.dev.vars`, run **`npm run secrets`** (with
-> `CLOUDFLARE_API_TOKEN` set) to push the values to the Worker as secrets.
-> Forgetting this is exactly how `GOOGLE_OAUTH_CLIENT_ID` ends up
-> "not configured" in production while working fine locally.
-
-### 4. Continuous deployment (recommended)
-
-Push the repo to GitHub, then in Cloudflare Dashboard → **Workers & Pages →
-Create → Connect to Git**. Cloudflare builds with `npm run deploy` on every
-push to the production branch. Keep secrets in the Worker's
-**Variables and Secrets** settings.
-
-### 5. Update Supabase URL configuration
-
-In Supabase → **Authentication → URL Configuration**:
-
-- **Site URL**: `https://track.sidcandev.online` (production) — or
-  `http://localhost:3000` while developing.
-- **Redirect URLs**: add `https://track.sidcandev.online/**` and
-  `http://localhost:3000/**` so the magic-link callback and the email
-  connection flow resolve on both environments.
-- **Email OTP settings**: under **Auth → Providers → Email** confirm
-  "Enable email signups" is on and "Confirm email" is enabled (this is
-  what makes the OTP/magic-link flow secure).
-
-### 6. Email template — send the 6-digit code, not just a link
-
-The app requests a **6-digit OTP** from Supabase (`signInWithOtp`) and
-verifies it on `/login` (`verifyOtp`). The **body of the email** is rendered
-by Supabase from its dashboard templates — it is *not* generated by this
-repo. If the email arrives showing only a "verify / log in" link and no
-code, the template needs to include the code token.
-
-**Fix (Supabase Dashboard → Authentication → Emails → Templates):** open
-both **Confirm signup** (new users) and **Magic Link** (returning users),
-and make sure the body shows `{{ .Token }}`. The login page accepts the code
-only, so the confirmation link can be removed. Paste-ready template:
-
-```html
-<h2>Your ShipTrack sign-in code</h2>
-<p>Enter the 6-digit code below to sign in:</p>
-<p style="font-size: 32px; font-weight: 700; letter-spacing: 4px;">{{ .Token }}</p>
-<p>This code expires in a few minutes. If you didn't request it, you can safely ignore this email.</p>
-```
-
-**Code is 8 digits instead of 6?** Supabase changed the default email OTP
-length to 8 digits (2025). The login page accepts 6–10 digits, but if you
-want the classic 6-digit code, set **Authentication → Providers → Email →
-Email OTP length** (email provider settings) to `6`. Codes are 6–10 digits,
-configurable via `MAILER_OTP_LENGTH`.
-
-Keep "Enable email signups" on and "Confirm email" enabled — verifying the
-code confirms the account automatically, so no link is needed.
-
-### 7. Production authentication — public sign-up flow
-
-Anyone can create an account — no password, ever:
-
-1. Visit `https://track.sidcandev.online` → **Sign in**.
-2. Enter an email → **Send code**.
-3. A verification code arrives by email (see the "Email template" section
-   above — the code is sent instead of a one-click sign-in link).
-4. Enter the code → **Verify & sign in** → redirected to the dashboard.
-   New users are created automatically; returning users keep their
-   shipments, connected emails, and settings.
-
-Sessions persist via Supabase cookies (`@supabase/ssr`) and are refreshed
-by the Edge middleware; the dashboard and every API route validate the
-session server-side, and Postgres RLS keeps each user's data isolated.
-
-### Windows note
-
-OpenNext works on Windows but is only *fully supported* on Linux/macOS. If
-you hit build issues locally, run `npm run deploy` from WSL or use the
-GitHub → Cloudflare CI path instead.
-
----
-
-## Track 2 — Shipments (live)
-
-- `sql/0001_shipments.sql` — the `shipments` table with RLS policies; run it
-  from the Supabase **SQL Editor** or `supabase db push`. See `sql/README.md`.
-- Dashboard lists the signed-in user's shipments (RLS-scoped), with status
-  badges (`pending`, `in_transit`, `out_for_delivery`, `customs`,
-  `delivered`, `cancelled`).
-- **Add Shipment** opens a modal: tracking number, courier dropdown, optional
-  nickname. **Edit** also allows changing the status. **Delete** removes a row.
-- All mutations run through server actions in `src/app/dashboard/actions.ts`
-  with input validation; the `user_id` is always set from the session, so a
-  user can never create rows for someone else.
-
-## Track 3 — Courier tracking (live)
-
-- Run `sql/0002_tracking.sql` after `0001` (history table + cache columns),
-  then `sql/0003_out_for_delivery.sql` (adds the distinct
-  `out_for_delivery` status).
-- Click any shipment row → **details page** with a tracking timeline.
-  **Refresh tracking** calls `POST /api/tracking/refresh`.
-- That route is a secure serverless function: it only refreshes shipments
-  owned by the signed-in user (RLS + explicit lookup), and the courier API
-  keys (e.g. `TRACKCOURIER_API_KEY`) never leave the server. Provider
-  responses are mapped into ShipTrack statuses, new checkpoints are appended to
-  `tracking_history` (deduped), and the shipment status is updated.
-- **Caching**: a successful refresh is cached via `tracking_checked_at` for
-  `TRACKING_CACHE_TTL_MINUTES` (default 15) — no external call on repeat
-  refreshes within the window.
-- **Error states**: provider failures are persisted to `tracking_error` and
-  shown on the details page; the endpoint returns proper HTTP codes
-  (401/400/404/502) and the UI surfaces them via toasts.
-- **Providers** (swappable interface in `src/lib/tracking/`):
-  1. **TrackCourier.io** (`trackcourier.ts`) — when `TRACKCOURIER_API_KEY`
-     is set. Indian-first, 25+ couriers; free tier is 100 requests/month.
-  2. **Ship24** (`ship24.ts`) — when `SHIP24_API_KEY` is set. Global
-     aggregator with courier auto-detection.
-  3. **indian-courier-api** — your self-hosted scraper service
-     (github.com/rajatdhoot123/indian-courier-api) when
-     `INDIAN_COURIER_API_URL` is set. See "Deploying the Indian courier
-     tracking service" below.
-  4. **mock** — clearly-labeled simulated timeline when none are
-     configured, so the feature stays demoable locally.
-
-  When more than one real provider is configured they form a **failover
-  chain**: each is tried in order until one returns data (a tracking number
-  unknown to TrackCourier can be resolved by Ship24, and vice versa). The
-  15-minute cache also keeps provider quota usage low.
-
-### Deploying the Indian courier tracking service
-
-The `indian-courier-api` repo is a **web scraper**: it launches a headless
-Chromium browser and scrapes AfterShip's public tracking pages. It therefore
-needs a Chromium-capable host — it **cannot** run on Cloudflare Workers.
-
-```bash
-git clone https://github.com/rajatdhoot123/indian-courier-api.git
-cd indian-courier-api
-npm install
-npm start        # or deploy to any Node/Chromium host (Render, VPS, …)
-```
-
-Then point our app at it:
-
-```
-INDIAN_COURIER_API_URL=https://your-tracking-service.example.com
-```
-
-Our app calls `GET {INDIAN_COURIER_API_URL}/api/track/{courier}/{trackingId}`
-and maps `{ data: [{ location, detail, date }] }` into the same timeline
-format as the other providers.
-
-> ⚠️ **Known issue (verified Aug 2026):** the scraper's DOM selectors
-> (`#shipment-result-card`, `.checkpoint__detail`) are from AfterShip's
-> pre-2023 site and no longer exist — the tracking widget is now a minified
-> Svelte app with unstable generated IDs. Real tracking through this service
-> **does not currently work**, and scrapers are fragile by nature. The
-> **TrackCourier.io and Ship24** are the supported path (see above); the
-> mock provider keeps the app demoable in the meantime.
-
-## Roadmap
-
-- **Track 1 (done)** — Landing page, Supabase auth, dashboard shell.
-- **Track 2 (done)** — Shipments CRUD, status badges, RLS.
-- **Track 3 (done)** — Courier tracking (TrackCourier + Ship24), timeline, caching.
-- **Track 4 (done)** — Automatic shipment discovery from connected emails.
-
----
-
-## Track 4 — Automatic email discovery (live)
-
-Connect one or more email accounts (Gmail via Google OAuth) and the app
-finds shipment/order emails, extracts tracking numbers, and adds them to the
-same dashboard as your manual shipments.
-
-### 1. Run the migration
-
-Run `sql/0004_email_discovery.sql` in Supabase → SQL Editor (after 0001–0003).
-It adds `source` / `source_email` / `merchant` / `estimated_delivery` to
-`shipments`, a per-user tracking-number uniqueness index, and the
-`connected_emails` table (encrypted token storage + RLS).
-
-> If shipments discovered before the parser fix show "Delivered" (or
-> "Cancelled") incorrectly, run `sql/0005_fix_email_parser_status.sql` too —
-> it resets email-discovered shipments that have no real courier history
-> back to `pending` (see `sql/README.md`).
-
-### 2. Set up Google OAuth
-
-1. [Google Cloud Console](https://console.cloud.google.com) → create a
-   project (or pick one) → **APIs & Services → Library** → enable the
-   **Gmail API**.
-2. **APIs & Services → OAuth consent screen** → External → add your email
-   as a test user.
-3. **Credentials → Create credentials → OAuth client ID → Web application**.
-   Add an authorized redirect URI:
-   - Local: `http://localhost:3000/api/emails/callback`
-   - Production: `https://track.sidcandev.online/api/emails/callback`
-4. Copy the client ID/secret into `.env.local` (and Worker secrets):
-   `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`.
-5. Generate an encryption key and set `EMAIL_TOKEN_ENCRYPTION_KEY`:
-
-   ```bash
-   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-   ```
-
-### 3. Connect an email
-
-**Dashboard → Settings → Connected Emails → Connect another email**.
-You'll be taken to Google's consent screen (Gmail read-only scope). The app
-never asks for your password and never stores email content — only the
-refreshed tracking facts. Each connected account has its own **Sync Now**,
-**Last synced** time, and **Disconnect**.
-
-### 4. How discovery works
-
-1. **Scan** — the sync queries recent Gmail (`newer_than:90d` + shipment
-   keywords). Only cheap headers (subject + from) are fetched for filtering.
-2. **Parse** — modular parsers in `src/lib/emails/parsers/` (Amazon,
-   Flipkart, Myntra, Meesho, known couriers like Delhivery/Bluedart/Ekart/
-   FedEx/UPS/India Post, known brands like Ajio/Nykaa/Snapdeal, **plus a
-   generic fallback parser**) detect the merchant/courier and extract the
-   tracking/AWB number, estimated delivery and status. The generic parser
-   means *any* brand that emails tracking details ("your order has been
-   dispatched", AWB numbers, "out for delivery") is picked up — even ones
-   we've never seen before. Adding a merchant = one new parser file
-   registered in `parsers/index.ts` (or just add its sender domain to
-   `src/lib/emails/patterns.ts` for nicer labels).
-3. **Dedupe** — a tracking number that already exists for the user (added
-   manually or discovered earlier) is **associated** with the existing
-   shipment (`source_email` is set), never duplicated. The DB also enforces
-   a per-user unique index as a safety net.
-4. **Create** — new shipments get `source = 'email'`, the discovering email
-   in `source_email`, the merchant, and an estimated delivery when found.
-   Refresh tracking works exactly like manual shipments.
-
-### 5. Security model
-
-- Google **OAuth** only — passwords are never requested.
-- The **refresh token is encrypted at rest** (AES-256-GCM, key in
-  `EMAIL_TOKEN_ENCRYPTION_KEY`); access tokens live only in memory during a
-  sync. Tokens are never sent to the browser.
-- **RLS** on `connected_emails` and `shipments` keeps every user's data
-  private. `refresh_token_encrypted` is never selected by the UI.
-- Disconnecting revokes the Google token (best effort) and deletes the
-  connection row — **existing discovered shipments are kept**.
-- Minimal data: email bodies are parsed in memory and discarded; only
-  tracking facts are stored.
-
-### 6. Background sync (Cloudflare-ready)
-
-Sync is idempotent and lives in a plain function
-(`syncAllConnectedEmails` in `src/lib/emails/sync.ts`) that `POST
-/api/emails/sync` calls without an `emailId` to sync every connected
-account. To add scheduled sync later, point a Cloudflare **Cron Trigger**
-at that endpoint (protect it with a service token) — no code changes
-needed in the sync engine.
-
-### 7. Manual flow is unchanged
-
-The **Add Shipment** button, manual create/edit/delete, status badges, and
-refresh tracking all work exactly as before. Discovered shipments simply
-join the same list.
-
----
-
-## Public launch — legal pages & Google OAuth authorization
-
-Before the Google OAuth consent screen can go public (required for the Gmail
-read-only scope), Google needs working links on the site plus a contact
-address. All of these are already in place:
-
-| Required by Google    | URL / value                                     |
-| --------------------- | ----------------------------------------------- |
-| Homepage / app URL    | `https://track.sidcandev.online`                |
-| Privacy policy URL    | `https://track.sidcandev.online/privacy`        |
-| Terms of service URL  | `https://track.sidcandev.online/terms`          |
-| Support/contact email | `sidhantaadityan@outlook.com`                  |
-
-**Google Cloud Console → APIs & Services → OAuth consent screen:**
-
-1. Set **User type** to **External** and fill in the app name, **support
-   email** (`sidhantaadityan@outlook.com`), and developer contact email.
-2. Under **Authorized domains**, add `sidcandev.online` and verify domain
-   ownership through Google Search Console when prompted.
-3. Under **App information**, add the **Application home page**, **Application
-   privacy policy**, and **Application terms of service** links from the table
-   above (each page is served at its own URL and ready to be opened).
-4. Publish the app to **In production**. Because the Gmail read-only scope is
-   a *sensitive* scope, Google will require **app verification** (a short
-   security questionnaire and, usually, a demo video). Until then the app
-   runs in **Testing** mode, which only lets the test users you add sign in.
-
-## Common issues
-
-- **Email shows a link but no 6-digit code** — edit the **Confirm signup**
-  and **Magic Link** email templates in Supabase to include `{{ .Token }}`
-  (see "Email template" above).
-- **Code never arrives / "Email not confirmed"** — check **Auth →
-  Providers → Email** and **Auth → URL Configuration**; confirm the email
-  provider is enabled and the redirect URLs include your site. OTP codes
-  expire, so use **Resend code** to get a fresh one.
+## 🐛 Common issues
+
+- **Email shows a link but no code** — edit the **Confirm signup** and
+  **Magic Link** templates in Supabase to include `{{ .Token }}` (see the
+  sign-in flow). Supabase's default OTP length is 8 digits; set **Email OTP
+  length** to `6` for a classic code.
+- **Code never arrives / "Email not confirmed"** — check **Auth → Providers →
+  Email** and **Auth → URL Configuration**; OTP codes expire, so use
+  **Resend code**.
 - **"For security purposes…" on send/verify** — Supabase rate-limits OTP
-  requests; wait a minute and try again.
-- **Session not persisting after deploy** — make sure `NEXT_PUBLIC_SUPABASE_URL`
-  is set as a Worker variable *and* in the build environment, and that
-  `https://track.sidcandev.online` is in Supabase's allowed redirect URLs.
+  requests; wait a minute and retry.
+- **Session not persisting after deploy** — make sure
+  `NEXT_PUBLIC_SUPABASE_URL` is set as a Worker variable *and* in the build
+  environment, and that your domain is in Supabase's allowed redirect URLs.
 - **Middleware deprecation warning** — expected on Next 16; see the
   `proxy.ts` note above.
+
+---
+
+## 🗓️ Roadmap
+
+- [x] Landing page, Supabase auth, dashboard shell
+- [x] Shipments CRUD + status badges + RLS
+- [x] Courier tracking (TrackCourier + Ship24), timeline, caching
+- [x] Automatic shipment discovery from connected emails
+- [ ] Scheduled background sync (Cloudflare Cron Trigger)
+- [ ] WhatsApp / email notifications on status changes
+- [ ] Multi-carrier label generation
+
+---
+
+## 📄 License
+
+TBD — MIT (pending).
