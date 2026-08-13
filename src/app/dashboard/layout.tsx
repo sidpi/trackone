@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
@@ -28,9 +29,17 @@ export default async function DashboardLayout({
         {children}
       </main>
       <footer className="border-t py-6">
-        <p className="text-center text-xs text-muted-foreground">
-          ShipTrack · Tracks 1–4 live
-        </p>
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 sm:flex-row sm:px-6">
+          <p className="text-xs text-muted-foreground">ShipTrack</p>
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+            <Link href="/privacy" className="transition-colors hover:text-foreground">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-foreground">
+              Terms of Service
+            </Link>
+          </nav>
+        </div>
       </footer>
     </div>
   );

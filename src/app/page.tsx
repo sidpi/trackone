@@ -1,7 +1,6 @@
 import { Cta } from "@/components/landing/cta";
 import { Features } from "@/components/landing/features";
 import { Hero } from "@/components/landing/hero";
-import { Roadmap } from "@/components/landing/roadmap";
 import { SiteFooter } from "@/components/landing/site-footer";
 import { SiteHeader } from "@/components/landing/site-header";
 
@@ -12,7 +11,6 @@ export default function Home() {
       <main className="flex-1">
         <Hero />
         <Features />
-        <Roadmap />
         <Cta />
       </main>
       <SiteFooter />

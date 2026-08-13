@@ -27,10 +27,28 @@ export const NORMALIZE_COURIER: Record<string, string> = {
   "delhivery": "Delhivery",
   "india post": "India Post",
   "speed post": "India Post",
+  "fedex": "FedEx",
+  "ups": "UPS",
+  "usps": "USPS",
+  "aramex": "Aramex",
+  "tnt": "TNT",
+  "safexpress": "Safexpress",
+  "trackon": "Trackon",
+  "porter": "Porter",
   "amazon": "Amazon",
   "flipkart": "Flipkart",
   "myntra": "Myntra",
   "meesho": "Meesho",
+  "ajio": "Ajio",
+  "nykaa": "Nykaa",
+  "snapdeal": "Snapdeal",
+  "tata cliq": "Tata CLiQ",
+  "tatacliq": "Tata CLiQ",
+  "croma": "Croma",
+  "reliance digital": "Reliance Digital",
+  "reliancedigital": "Reliance Digital",
+  "limeroad": "Limeroad",
+  "1mg": "1mg",
 };
 
 export function normalizeCourierName(raw: string): string {
@@ -50,10 +68,27 @@ export const SENDER_DOMAINS: Array<{ courier: string; domains: string[] }> = [
   { courier: "DHL", domains: ["dhl.com", "dhlindia.com"] },
   { courier: "Ecom", domains: ["ecomexpress.com", "ecom-ex.com"] },
   { courier: "India Post", domains: ["indiapost.gov.in"] },
+  { courier: "FedEx", domains: ["fedex.com"] },
+  { courier: "UPS", domains: ["ups.com"] },
+  { courier: "USPS", domains: ["usps.com"] },
+  { courier: "Aramex", domains: ["aramex.com"] },
+  { courier: "TNT", domains: ["tnt.com", "tntexpress.com"] },
+  { courier: "Safexpress", domains: ["safexpress.com"] },
+  { courier: "Trackon", domains: ["trackon.in", "trackoncourier.com"] },
+  { courier: "Porter", domains: ["porter.in"] },
   { courier: "Amazon", domains: ["amazon.in", "amazon.com", "amazon.co.uk"] },
   { courier: "Flipkart", domains: ["flipkart.com"] },
   { courier: "Myntra", domains: ["myntra.com"] },
   { courier: "Meesho", domains: ["meesho.com"] },
+  // More merchants/brands — their shipping notifications carry AWBs too.
+  { courier: "Ajio", domains: ["ajio.com"] },
+  { courier: "Nykaa", domains: ["nykaa.com", "nykaamail.com"] },
+  { courier: "Snapdeal", domains: ["snapdeal.com"] },
+  { courier: "Tata CLiQ", domains: ["tatacliq.com"] },
+  { courier: "Croma", domains: ["croma.com"] },
+  { courier: "Reliance Digital", domains: ["reliancedigital.in"] },
+  { courier: "Limeroad", domains: ["limeroad.com"] },
+  { courier: "1mg", domains: ["1mg.com"] },
 ];
 
 /** Courier/merchant keywords that may appear in a subject or body. */
@@ -68,10 +103,59 @@ export const COURIER_KEYWORDS: Array<{ courier: string; keywords: string[] }> = 
   { courier: "DHL", keywords: ["dhl"] },
   { courier: "Ecom", keywords: ["ecom express", "ecomexpress"] },
   { courier: "India Post", keywords: ["india post", "speed post"] },
+  { courier: "FedEx", keywords: ["fedex"] },
+  // Short courier names use space-delimited forms to avoid substring
+  // false positives ("ups" matches "cups", "tnt" matches nothing common
+  // but is safer with spaces).
+  { courier: "UPS", keywords: ["ups tracking", "ups package", "ups delivery", "ups shipment", "united parcel", "ups my choice", " ups ", "ups.com"] },
+  { courier: "USPS", keywords: ["usps"] },
+  { courier: "Aramex", keywords: ["aramex"] },
+  { courier: "TNT", keywords: ["tnt express", " tnt ", "tnt.com"] },
+  { courier: "Safexpress", keywords: ["safexpress", "safe express"] },
+  { courier: "Trackon", keywords: ["trackon"] },
+  { courier: "Porter", keywords: ["porter", "porter.in"] },
   { courier: "Amazon", keywords: ["amazon"] },
   { courier: "Flipkart", keywords: ["flipkart"] },
   { courier: "Myntra", keywords: ["myntra"] },
   { courier: "Meesho", keywords: ["meesho"] },
+  { courier: "Ajio", keywords: ["ajio"] },
+  { courier: "Nykaa", keywords: ["nykaa"] },
+  { courier: "Snapdeal", keywords: ["snapdeal"] },
+  { courier: "Tata CLiQ", keywords: ["tata cliq", "tatacliq"] },
+  { courier: "Croma", keywords: ["croma"] },
+  { courier: "Reliance Digital", keywords: ["reliance digital", "reliancedigital"] },
+  { courier: "Limeroad", keywords: ["limeroad"] },
+  { courier: "1mg", keywords: ["1mg"] },
+];
+
+/**
+ * Words that mark an email as a shipping/tracking notification from ANY
+ * store or courier — used by the generic fallback parser so brands we
+ * don't know by name still get picked up when they send tracking details.
+ */
+export const SHIPPING_KEYWORDS: string[] = [
+  "shipped",
+  "shipping update",
+  "dispatch",
+  "dispatched",
+  "dispatching",
+  "delivered",
+  "delivery update",
+  "tracking",
+  "track your",
+  "track package",
+  "awb",
+  "out for delivery",
+  "on the way",
+  "on its way",
+  "in transit",
+  "parcel",
+  "package",
+  "shipment",
+  "consignment",
+  "courier",
+  "estimated delivery",
+  "arriving",
 ];
 
 /**
@@ -87,6 +171,12 @@ export const COURIER_PATTERNS: Array<{ courier: string; pattern: RegExp }> = [
   { courier: "DHL", pattern: /\b\d{10}\b/ },
   { courier: "Ekart", pattern: /\b[A-Z]{2}\d{13,16}\b/i },
   { courier: "Ecom", pattern: /\b[A-Z]{2}\d{12,16}\b/i },
+  { courier: "FedEx", pattern: /\b\d{12}\b/ },
+  { courier: "UPS", pattern: /\b1Z[A-Z0-9]{15,16}\b/i },
+  { courier: "USPS", pattern: /\b\d{20,22}\b/ },
+  { courier: "TNT", pattern: /\b\d{9}\b/ },
+  { courier: "Safexpress", pattern: /\b\d{9}\b/ },
+  { courier: "Trackon", pattern: /\b\d{12}\b/ },
 ];
 
 /** Amazon-style order/tracking id: 3-7-7 digits. */
@@ -118,6 +208,8 @@ function domainOf(from: string): string {
 const REAL_COURIERS = new Set([
   "Delhivery", "Bluedart", "Ekart", "DTDC", "Shadowfax",
   "Xpressbees", "Gati", "DHL", "Ecom", "India Post",
+  "FedEx", "UPS", "USPS", "Aramex", "TNT", "Safexpress",
+  "Trackon", "Porter",
 ]);
 
 export function detectCourier(message: Pick<GmailMessage, "from" | "subject" | "snippet"> & {

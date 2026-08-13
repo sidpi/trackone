@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Auth callback — exchanges the magic-link / OTP `code` for a session.
- * The OTP email contains both a 6-digit code (typed into /login) and a
- * "Sign in" link that lands here.
+ * Auth callback — exchanges a magic-link / OTP `code` for a session.
+ * The OTP email is code-only by default (see README "Email template"),
+ * but this route stays as a fallback if a confirmation link is ever
+ * re-enabled in the Supabase email templates.
  */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);

@@ -7,7 +7,7 @@ import { ShipmentsTable } from "@/components/dashboard/shipments-table";
 import { SyncNowButton } from "@/components/dashboard/sync-now-button";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
-import type { Shipment, ShipmentStatus } from "@/lib/types";
+import type { ShipmentStatus, ShipmentWithTracking } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -53,7 +53,7 @@ export default async function DashboardPage({
     console.error("Failed to load shipments:", error.message);
   }
 
-  const rows = (shipments ?? []) as Shipment[];
+  const rows = (shipments ?? []) as ShipmentWithTracking[];
 
   const { count: emailCount } = await supabase
     .from("connected_emails")

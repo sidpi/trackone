@@ -28,7 +28,7 @@ export interface GmailProfile {
 
 /** Discovery query — shipment/order keywords in recent mail. */
 export const DISCOVERY_QUERY =
-  'newer_than:90d AND (order OR shipped OR dispatch OR dispatched OR delivered OR tracking OR awb OR "out for delivery" OR "on the way" OR "estimated delivery")';
+  'newer_than:90d AND (order OR shipped OR dispatch OR dispatched OR delivered OR delivery OR tracking OR awb OR "out for delivery" OR "on the way" OR "on its way" OR "estimated delivery" OR parcel OR package OR consignment OR "delivery update")';
 
 export async function getProfile(accessToken: string): Promise<GmailProfile> {
   const res = await fetch(`${GMAIL_API}/profile`, {

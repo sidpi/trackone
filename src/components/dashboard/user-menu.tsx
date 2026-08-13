@@ -1,6 +1,8 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { Loader2, LogOut } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -22,6 +24,28 @@ function initials(name: string) {
 }
 
 export function UserMenu({ name, email }: { name: string; email: string }) {
+  const router = useRouter();
+  const [signingOut, setSigningOut] = React.useState(false);
+
+  /**
+   * Client-side sign-out: POST /auth/signout (clears the Supabase session
+   * cookies), then navigate home. This is more reliable than a form inside
+   * the portal-rendered menu, where the submit click could be swallowed.
+   */
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await fetch("/auth/signout", { method: "POST" });
+      router.push("/");
+      router.refresh();
+    } catch {
+      // Even if the POST fails, land on the home page.
+      router.push("/");
+      router.refresh();
+    }
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -42,16 +66,19 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <form action="/auth/signout" method="POST">
-          <DropdownMenuItem
-            variant="destructive"
-            className="cursor-pointer"
-            render={<button type="submit" className="w-full" />}
-          >
+        <DropdownMenuItem
+          variant="destructive"
+          className="cursor-pointer"
+          onClick={handleSignOut}
+          disabled={signingOut}
+        >
+          {signingOut ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
             <LogOut />
-            Sign out
-          </DropdownMenuItem>
-        </form>
+          )}
+          {signingOut ? "Signing out…" : "Sign out"}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

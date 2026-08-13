@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { Logo } from "@/components/logo";
 
+const CONTACT_EMAIL = "sidhantaadityan@outlook.com";
+
 export function SiteFooter() {
   return (
     <footer className="border-t">
@@ -13,21 +15,26 @@ export function SiteFooter() {
           </p>
         </div>
 
-        <nav className="flex items-center gap-6 text-sm text-muted-foreground">
+        <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
           <Link href="#features" className="transition-colors hover:text-foreground">
             Features
           </Link>
-          <Link href="#roadmap" className="transition-colors hover:text-foreground">
-            Roadmap
+          <Link href="/privacy" className="transition-colors hover:text-foreground">
+            Privacy Policy
           </Link>
-          <Link href="/login" className="transition-colors hover:text-foreground">
-            Sign in
+          <Link href="/terms" className="transition-colors hover:text-foreground">
+            Terms of Service
           </Link>
+          <a
+            href={`mailto:${CONTACT_EMAIL}`}
+            className="transition-colors hover:text-foreground"
+          >
+            Contact
+          </a>
         </nav>
 
         <p className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} ShipTrack · Next.js on Cloudflare ·
-          Supabase
+          © {new Date().getFullYear()} ShipTrack. All rights reserved.
         </p>
       </div>
     </footer>

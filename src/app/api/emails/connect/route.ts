@@ -33,5 +33,20 @@ export async function GET(request: Request) {
   });
 
   const origin = new URL(request.url).origin;
-  return NextResponse.redirect(buildAuthUrl(origin, state));
+
+  try {
+    return NextResponse.redirect(buildAuthUrl(origin, state));
+  } catch (err) {
+    // Missing Google OAuth credentials throw inside buildAuthUrl. Surface a
+    // friendly message on the settings page instead of a raw 500.
+    console.error("Email connect failed:", err);
+    return NextResponse.redirect(
+      new URL(
+        `/dashboard/settings?error=${encodeURIComponent(
+          "Email connection isn't configured yet. The owner needs to add the Google OAuth credentials (GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET) to the server environment."
+        )}`,
+        request.url
+      )
+    );
+  }
 }

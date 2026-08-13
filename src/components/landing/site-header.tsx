@@ -15,9 +15,6 @@ export function SiteHeader() {
           <Link href="#features" className="transition-colors hover:text-foreground">
             Features
           </Link>
-          <Link href="#roadmap" className="transition-colors hover:text-foreground">
-            Roadmap
-          </Link>
         </nav>
 
         <div className="flex items-center gap-2">

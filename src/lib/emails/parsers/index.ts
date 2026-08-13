@@ -3,13 +3,15 @@ import type { EmailParser, ParsedShipment } from "../types";
 import { amazonParser } from "./amazon";
 import { courierParser } from "./courier";
 import { flipkartParser } from "./flipkart";
+import { genericParser } from "./generic";
 import { meeshoParser } from "./meesho";
 import { myntraParser } from "./myntra";
 
 /**
  * Registry of email parsers, tried in order. To support a new merchant:
  * add a file in this folder implementing `EmailParser`, then register it
- * here.
+ * here. `genericParser` (last) catches shipping notifications from any
+ * brand we don't know by name.
  */
 export const EMAIL_PARSERS: EmailParser[] = [
   amazonParser,
@@ -17,6 +19,7 @@ export const EMAIL_PARSERS: EmailParser[] = [
   myntraParser,
   meeshoParser,
   courierParser,
+  genericParser,
 ];
 
 /**

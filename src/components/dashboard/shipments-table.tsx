@@ -3,7 +3,8 @@ import { Package } from "lucide-react";
 
 import { ShipmentRowActions } from "@/components/dashboard/shipment-row-actions";
 import { ShipmentStatusBadge } from "@/components/dashboard/shipment-status-badge";
-import type { Shipment } from "@/lib/types";
+import { extractTrackingSummary } from "@/lib/tracking/summary";
+import type { ShipmentWithTracking } from "@/lib/types";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -13,8 +14,14 @@ function formatDate(iso: string) {
   });
 }
 
-function ShipmentRow({ shipment }: { shipment: Shipment }) {
+function ShipmentRow({ shipment }: { shipment: ShipmentWithTracking }) {
   const label = shipment.nickname || shipment.tracking_number;
+  // Prefer the delivery estimate extracted from the order email; fall back to
+  // the courier provider's ETA from the cached tracking payload.
+  const eta =
+    shipment.estimated_delivery ??
+    extractTrackingSummary(shipment.tracking_raw).eta ??
+    null;
 
   return (
     <tr className="transition-colors hover:bg-muted/40">
@@ -56,6 +63,9 @@ function ShipmentRow({ shipment }: { shipment: Shipment }) {
         <ShipmentStatusBadge status={shipment.status} />
       </td>
       <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">
+        {eta ? formatDate(eta) : "—"}
+      </td>
+      <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">
         {formatDate(shipment.created_at)}
       </td>
       <td className="px-4 py-3">
@@ -65,7 +75,7 @@ function ShipmentRow({ shipment }: { shipment: Shipment }) {
   );
 }
 
-export function ShipmentsTable({ shipments }: { shipments: Shipment[] }) {
+export function ShipmentsTable({ shipments }: { shipments: ShipmentWithTracking[] }) {
   return (
     <div className="overflow-hidden rounded-xl border">
       <div className="overflow-x-auto">
@@ -75,6 +85,9 @@ export function ShipmentsTable({ shipments }: { shipments: Shipment[] }) {
               <th className="px-4 py-3 font-medium">Tracking</th>
               <th className="px-4 py-3 font-medium">Courier</th>
               <th className="px-4 py-3 font-medium">Status</th>
+              <th className="hidden px-4 py-3 font-medium md:table-cell">
+                Est. delivery
+              </th>
               <th className="hidden px-4 py-3 font-medium md:table-cell">
                 Created
               </th>

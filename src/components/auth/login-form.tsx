@@ -111,7 +111,7 @@ export function LoginForm() {
   async function verifyCode(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (otp.trim().length < 6) {
-      toast.error("Enter the 6-digit code from the email.");
+      toast.error("Enter the verification code from the email.");
       return;
     }
     setIsPending(true);
@@ -141,7 +141,8 @@ export function LoginForm() {
         <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/40 px-3 py-2.5">
           <MailCheck className="size-4 shrink-0 text-primary" />
           <p className="text-sm text-muted-foreground">
-            We sent a 6-digit code to <strong className="text-foreground">{email}</strong>.
+            We sent a verification code to{" "}
+            <strong className="text-foreground">{email}</strong>.
           </p>
         </div>
 
@@ -155,7 +156,7 @@ export function LoginForm() {
               inputMode="numeric"
               autoComplete="one-time-code"
               pattern="[0-9]*"
-              maxLength={6}
+              maxLength={10}
               placeholder="••••••"
               className="text-center text-lg tracking-[0.4em]"
               autoFocus
