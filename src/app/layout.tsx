@@ -22,6 +22,13 @@ export const metadata: Metadata = {
   },
   description:
     "Track shipments, collaborate with your team, and keep every delivery on time.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    // app/icon.svg is auto-linked as the favicon; the manifest supplies the
+    // installable app icon (PNG) for phones/desktops.
+    icon: "/logo.svg",
+    apple: "/logo.svg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
