@@ -14,6 +14,8 @@
   <img src="https://img.shields.io/badge/Tailwind%20CSS-v4-06B6D4?logo=tailwindcss&logoColor=white&style=flat-square" alt="Tailwind CSS v4"/>
   <img src="https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white&style=flat-square" alt="Supabase"/>
   <img src="https://img.shields.io/badge/Cloudflare-F38020?logo=cloudflare&logoColor=white&style=flat-square" alt="Cloudflare"/>
+  <img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square" alt="MIT License"/>
+  <img src="https://img.shields.io/github/actions/workflow/status/sidpi/trackone/ci.yml?branch=master&label=CI&style=flat-square" alt="CI status"/>
 </p>
 
 ---
@@ -329,4 +331,4 @@ Sync is idempotent and can run on a schedule later by pointing a Cloudflare
 
 ## 📄 License
 
-TBD — MIT (pending).
+[MIT](LICENSE) © 2026 [sidpi](https://github.com/sidpi).
