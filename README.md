@@ -199,6 +199,7 @@ the file and function (`middleware` → `proxy`) — no other changes needed.
 | `npm run preview`   | OpenNext build + run locally on the Workers runtime |
 | `npm run deploy`    | OpenNext build + deploy to Cloudflare               |
 | `npm run upload`    | OpenNext build + upload a new version               |
+| `npm run secrets`   | Upload `.dev.vars` runtime vars to the Worker as secrets |
 
 ---
 
@@ -258,6 +259,14 @@ In the Worker dashboard → **Settings → Variables and Secrets**:
 CI, set them there too. Provider keys are **runtime secrets**: store them as
 Worker secrets (never in code or build vars). Without any keys the app falls
 back to the demo/mock provider.
+
+> ⚠️ **`npm run deploy` does NOT upload `.dev.vars` to the Worker.** The
+> "Using secrets defined in .dev.vars" line in the deploy output is wrangler
+> telling you it *read* the file locally — it is not uploaded. After adding
+> or changing a runtime var in `.dev.vars`, run **`npm run secrets`** (with
+> `CLOUDFLARE_API_TOKEN` set) to push the values to the Worker as secrets.
+> Forgetting this is exactly how `GOOGLE_OAUTH_CLIENT_ID` ends up
+> "not configured" in production while working fine locally.
 
 ### 4. Continuous deployment (recommended)
 
