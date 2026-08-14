@@ -166,22 +166,25 @@
    a full-viewport colorful stage with a frosted card on top. Theme-aware —
    light mode uses a pastel stage and light glass, dark mode a vivid stage
    and dark glass. */
+/* Match the homepage palette: sky + indigo + primary glows (same family
+   as the hero's ambient orbs and aurora). */
 .glass-stage {
   background:
-    radial-gradient(circle at 15% 20%, #fde68a 0%, transparent 42%),
-    radial-gradient(circle at 85% 30%, #f9a8d4 0%, transparent 45%),
-    radial-gradient(circle at 30% 85%, #c4b5fd 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, #a5f3fc 0%, transparent 48%),
-    linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+    radial-gradient(circle at 15% 20%, rgb(186 230 253 / 0.9) 0%, transparent 42%),
+    radial-gradient(circle at 85% 30%, rgb(199 210 254 / 0.9) 0%, transparent 45%),
+    radial-gradient(circle at 30% 85%, rgb(165 180 252 / 0.85) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgb(186 230 253 / 0.8) 0%, transparent 48%),
+    linear-gradient(135deg, #f0f9ff 0%, #eef2ff 100%);
 }
 
 .dark .glass-stage {
   background:
-    radial-gradient(circle at 15% 20%, #fbbf24 0%, transparent 42%),
-    radial-gradient(circle at 85% 30%, #ec4899 0%, transparent 45%),
-    radial-gradient(circle at 30% 85%, #7c6cff 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, #22d3ee 0%, transparent 48%),
-    linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    radial-gradient(circle at 50% 0%, rgb(255 255 255 / 0.16) 0%, transparent 42%),
+    radial-gradient(circle at 15% 20%, rgb(56 189 248 / 0.9) 0%, transparent 42%),
+    radial-gradient(circle at 85% 30%, rgb(99 102 241 / 0.9) 0%, transparent 45%),
+    radial-gradient(circle at 30% 85%, rgb(129 140 248 / 0.85) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgb(14 165 233 / 0.8) 0%, transparent 48%),
+    linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
 }
 
 .glass-card {
