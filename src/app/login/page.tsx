@@ -21,14 +21,20 @@ export const metadata: Metadata = {
 
 export default async function LoginPage() {
   return (
-    <div className="flex min-h-dvh flex-1 flex-col">
+    <div className="relative flex min-h-dvh flex-1 flex-col overflow-hidden">
+      {/* Colorful stage behind the frosted card (CodeFronts pattern). */}
+      <div
+        aria-hidden
+        className="glass-stage pointer-events-none absolute inset-0 -z-10"
+      />
+
       <header className="flex h-16 items-center justify-between px-4 sm:px-6">
         <Logo />
         <ThemeToggle />
       </header>
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 pb-16">
-        <Card className="w-full">
+        <Card className="glass-card w-full">
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Sign in</CardTitle>
             <CardDescription>
