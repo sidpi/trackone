@@ -21,6 +21,16 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-dvh flex-1 flex-col">
+      {/* Ambient glows behind the dashboard (same family as the hero). */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10"
+      >
+        <div className="absolute -top-24 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute top-40 -left-24 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
+        <div className="absolute top-64 -right-24 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl" />
+      </div>
+
       <DashboardHeader
         email={user.email ?? ""}
         name={user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "User"}

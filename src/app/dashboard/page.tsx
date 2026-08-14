@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Boxes } from "lucide-react";
+import { Boxes, PackageCheck, PackageSearch, TriangleAlert } from "lucide-react";
 
 import { AddShipmentButton } from "@/components/dashboard/add-shipment-button";
+import { ShipmentAlert } from "@/components/dashboard/shipment-alert";
 import { ShipmentsAutoRefresh } from "@/components/dashboard/shipments-auto-refresh";
 import { ShipmentsTable } from "@/components/dashboard/shipments-table";
 import { SyncNowButton } from "@/components/dashboard/sync-now-button";
@@ -75,6 +76,30 @@ export default async function DashboardPage({
     .from("connected_emails")
     .select("id", { count: "exact", head: true });
 
+  // Glass overview widgets with real counts (CodeFronts overlay pattern).
+  const stats = [
+    {
+      label: "In transit",
+      href: "/dashboard?status=in_transit",
+      count: rows.filter((s) =>
+        ["in_transit", "out_for_delivery", "customs"].includes(s.status)
+      ).length,
+      icon: PackageSearch,
+    },
+    {
+      label: "Delivered",
+      href: "/dashboard?status=delivered",
+      count: rows.filter((s) => s.status === "delivered").length,
+      icon: PackageCheck,
+    },
+    {
+      label: "Exceptions",
+      href: "/dashboard?status=exception",
+      count: rows.filter((s) => s.status === "cancelled").length,
+      icon: TriangleAlert,
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       {/* Toolbar */}
@@ -96,6 +121,31 @@ export default async function DashboardPage({
           <AddShipmentButton />
         </div>
       </div>
+
+      {/* Glass overview widgets */}
+      {rows.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          {stats.map(({ label, href, count, icon: Icon }) => (
+            <Link
+              key={label}
+              href={href}
+              className="glass-widget group flex items-center justify-between rounded-xl px-4 py-3.5 transition-transform hover:-translate-y-0.5"
+            >
+              <div>
+                <p className="text-2xl font-semibold tracking-tight tabular-nums">
+                  {count}
+                </p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  {label}
+                </p>
+              </div>
+              <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+                <Icon className="size-4" />
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* Status filter tabs */}
       <div className="flex flex-wrap items-center gap-1.5">
@@ -140,6 +190,9 @@ export default async function DashboardPage({
       ) : (
         <ShipmentsTable shipments={rows} />
       )}
+
+      {/* Floating frosted notification for the latest shipment. */}
+      {rows[0] && <ShipmentAlert shipment={rows[0]} />}
     </div>
   );
 }
