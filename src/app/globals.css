@@ -128,3 +128,36 @@
     @apply font-sans;
   }
 }
+
+/* Frosted-glass header (CodeFronts glassmorphism pattern adapted):
+   transparent at the top, frosted glass once the sentinel scrolls out of view. */
+.site-header {
+  background: transparent;
+  border-color: transparent;
+  transition:
+    background-color 0.35s cubic-bezier(0.4, 0.2, 0.2, 1),
+    border-color 0.35s cubic-bezier(0.4, 0.2, 0.2, 1),
+    backdrop-filter 0.35s cubic-bezier(0.4, 0.2, 0.2, 1),
+    box-shadow 0.35s cubic-bezier(0.4, 0.2, 0.2, 1);
+  will-change: backdrop-filter;
+}
+
+.site-header.is-scrolled {
+  background: color-mix(in oklab, var(--background) 82%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-color: var(--border);
+  box-shadow: 0 8px 24px -12px rgb(0 0 0 / 0.25);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .site-header.is-scrolled {
+    background: var(--background);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header {
+    transition: none;
+  }
+}

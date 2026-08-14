@@ -7,6 +7,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 
+import { HeaderFrost } from "./header-frost";
+
 export async function SiteHeader() {
   const supabase = await createClient();
   const {
@@ -14,7 +16,12 @@ export async function SiteHeader() {
   } = await supabase.auth.getUser();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
+    <>
+      <HeaderFrost />
+      <header
+        id="site-header"
+        className="site-header sticky top-0 z-40 border-b"
+      >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Logo />
 
@@ -43,6 +50,7 @@ export async function SiteHeader() {
           )}
         </div>
       </div>
-    </header>
+      </header>
+    </>
   );
 }
