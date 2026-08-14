@@ -15,19 +15,45 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = "https://track.sidcandev.online";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "ShipTrack — Shipment tracking, simplified",
     template: "%s · ShipTrack",
   },
   description:
-    "Track shipments, collaborate with your team, and keep every delivery on time.",
+    "ShipTrack is a shipment tracking app for small freight teams. Every shipment in one dashboard, tracked through courier providers.",
   manifest: "/manifest.webmanifest",
   icons: {
     // app/icon.svg is auto-linked as the favicon; the manifest supplies the
     // installable app icon (PNG) for phones/desktops.
     icon: "/logo.svg",
     apple: "/logo.svg",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "ShipTrack",
+    title: "ShipTrack — Shipment tracking, simplified",
+    description:
+      "ShipTrack is a shipment tracking app for small freight teams. Every shipment in one dashboard, tracked through courier providers.",
+    url: SITE_URL,
+    images: [
+      {
+        url: "/logo-512.png",
+        width: 512,
+        height: 512,
+        alt: "ShipTrack logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "ShipTrack — Shipment tracking, simplified",
+    description:
+      "ShipTrack is a shipment tracking app for small freight teams. Every shipment in one dashboard, tracked through courier providers.",
+    images: ["/logo-512.png"],
   },
 };
 

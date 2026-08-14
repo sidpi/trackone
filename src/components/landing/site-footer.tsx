@@ -11,7 +11,8 @@ export function SiteFooter() {
         <div className="flex flex-col items-center gap-3 sm:items-start">
           <Logo />
           <p className="text-sm text-muted-foreground">
-            Shipment tracking, simplified.
+            ShipTrack is a shipment tracking app for small freight teams —
+            every shipment, one dashboard.
           </p>
         </div>
 

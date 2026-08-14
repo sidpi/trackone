@@ -83,7 +83,7 @@ export function Hero() {
               data-hero-enter
               className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl"
             >
-              Shipment tracking,{" "}
+              ShipTrack — tracking,{" "}
               <span
                 data-hero-gradient
                 className="bg-linear-to-r from-primary via-sky-600 to-indigo-600 bg-clip-text text-transparent dark:from-primary dark:via-sky-400 dark:to-indigo-400"
@@ -97,8 +97,10 @@ export function Hero() {
               data-hero-enter
               className="mx-auto mt-6 max-w-xl text-lg text-pretty text-muted-foreground"
             >
-              One clean dashboard for every shipment. Know where your cargo is,
-              what&apos;s next, and who&apos;s handling it — without the spreadsheet chaos.
+              ShipTrack is a shipment tracking app for small freight teams. It
+              brings every shipment into one dashboard — know where your cargo
+              is, what&apos;s next, and who&apos;s handling it, without the
+              spreadsheet chaos.
             </p>
 
             <div
