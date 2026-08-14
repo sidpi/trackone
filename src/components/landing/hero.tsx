@@ -12,6 +12,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { HeroMotion } from "./hero-motion";
+
 const previewRows = [
   { id: "SH-1042", origin: "Shanghai", dest: "Los Angeles", status: "In transit" },
   { id: "SH-1041", origin: "Rotterdam", dest: "New York", status: "Customs" },
@@ -41,37 +43,68 @@ function StatusPill({ status }: { status: string }) {
 export function Hero() {
   return (
     <section className="relative overflow-hidden">
-      {/* Ambient glows */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-      >
-        <div className="absolute -top-24 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute top-40 -left-24 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
-        <div className="absolute top-64 -right-24 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl" />
-      </div>
+      <HeroMotion>
+        {/* Ambient glows */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10"
+        >
+          <div
+            data-hero-aurora
+            className="absolute left-1/2 top-[-24rem] h-[80rem] w-[80rem] -translate-x-1/2 rounded-full opacity-70 blur-3xl"
+            style={{
+              background:
+                "conic-gradient(from 0deg at 50% 50%, transparent 0deg, color-mix(in oklab, var(--primary) 14%, transparent) 90deg, color-mix(in oklab, #38bdf8 14%, transparent) 180deg, color-mix(in oklab, #818cf8 14%, transparent) 270deg, transparent 360deg)",
+            }}
+          />
+          <div
+            data-hero-glow
+            data-hero-glow-center
+            className="absolute -top-24 left-1/2 h-96 w-[42rem] rounded-full bg-primary/10 blur-3xl"
+          />
+          <div
+            data-hero-glow
+            className="absolute top-40 -left-24 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl"
+          />
+          <div
+            data-hero-glow
+            className="absolute top-64 -right-24 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl"
+          />
+        </div>
 
-      <div className="mx-auto max-w-6xl px-4 pt-20 pb-16 sm:px-6 sm:pt-28 sm:pb-20">
-        <div className="mx-auto max-w-3xl text-center">
-          <Badge variant="secondary" className="mb-6 gap-1.5">
-            <Ship className="size-3" />
-            ShipTrack · Tracking live
-          </Badge>
+        <div className="mx-auto max-w-6xl px-4 pt-20 pb-16 sm:px-6 sm:pt-28 sm:pb-20">
+          <div className="mx-auto max-w-3xl text-center">
+            <Badge variant="secondary" className="mb-6 gap-1.5" data-hero-enter>
+              <Ship className="size-3" />
+              ShipTrack · Tracking live
+            </Badge>
 
-          <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
-            Shipment tracking,{" "}
-            <span className="bg-linear-to-r from-primary via-sky-600 to-indigo-600 bg-clip-text text-transparent dark:from-primary dark:via-sky-400 dark:to-indigo-400">
-              simplified
-            </span>
-            .
-          </h1>
+            <h1
+              data-hero-enter
+              className="text-4xl font-semibold tracking-tight text-balance sm:text-6xl"
+            >
+              Shipment tracking,{" "}
+              <span
+                data-hero-gradient
+                className="bg-linear-to-r from-primary via-sky-600 to-indigo-600 bg-clip-text text-transparent dark:from-primary dark:via-sky-400 dark:to-indigo-400"
+              >
+                simplified
+              </span>
+              .
+            </h1>
 
-          <p className="mx-auto mt-6 max-w-xl text-lg text-pretty text-muted-foreground">
-            One clean dashboard for every shipment. Know where your cargo is,
-            what&apos;s next, and who&apos;s handling it — without the spreadsheet chaos.
-          </p>
+            <p
+              data-hero-enter
+              className="mx-auto mt-6 max-w-xl text-lg text-pretty text-muted-foreground"
+            >
+              One clean dashboard for every shipment. Know where your cargo is,
+              what&apos;s next, and who&apos;s handling it — without the spreadsheet chaos.
+            </p>
 
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <div
+              data-hero-enter
+              className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
+            >
             <Button size="lg" className="w-full sm:w-auto" render={<Link href="/login?next=/dashboard" />}>
               Sign in to your dashboard
               <ArrowRight data-icon="inline-end" />
@@ -86,13 +119,16 @@ export function Hero() {
             </Button>
           </div>
 
-          <p className="mt-4 text-sm text-muted-foreground">
+          <p data-hero-enter className="mt-4 text-sm text-muted-foreground">
             Secure sign-in powered by Supabase · Postgres under the hood
           </p>
         </div>
 
         {/* Mock dashboard preview */}
-        <div className="relative mx-auto mt-16 max-w-4xl sm:mt-20">
+        <div
+          data-hero-enter
+          className="relative mx-auto mt-16 max-w-4xl sm:mt-20"
+        >
           <div
             aria-hidden
             className="absolute -inset-6 -z-10 rounded-3xl bg-linear-to-b from-primary/10 to-transparent blur-2xl"
@@ -187,6 +223,7 @@ export function Hero() {
           </div>
         </div>
       </div>
+      </HeroMotion>
     </section>
   );
 }

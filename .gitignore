@@ -27,6 +27,10 @@
 # agent workspace
 .freebuff/
 
+# locally installed agent skills (not part of the repo)
+.agents/
+skills-lock.json
+
 # supabase cli local state (project ref, versions — machine-specific)
 sql/supabase/.temp/
 

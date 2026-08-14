@@ -8,6 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import { FeaturesMotion } from "./features-motion";
+
 const features = [
   {
     icon: PackageSearch,
@@ -38,21 +40,22 @@ const features = [
 export function Features() {
   return (
     <section id="features" className="scroll-mt-20 border-t bg-muted/30">
-      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-medium text-primary">Features</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-            Everything a small freight team needs
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            Start with a clean dashboard and grow into the full shipment
-            workflow as each track ships.
-          </p>
-        </div>
+      <FeaturesMotion>
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
+          <div data-features-head className="mx-auto max-w-2xl text-center">
+            <p className="text-sm font-medium text-primary">Features</p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+              Everything a small freight team needs
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Start with a clean dashboard and grow into the full shipment
+              workflow as each track ships.
+            </p>
+          </div>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map(({ icon: Icon, title, description }) => (
-            <Card key={title} size="sm" className="gap-3">
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {features.map(({ icon: Icon, title, description }) => (
+              <Card key={title} size="sm" className="gap-3" data-feature-card>
               <CardHeader>
                 <span className="mb-1 flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Icon className="size-4.5" />
@@ -68,6 +71,7 @@ export function Features() {
           ))}
         </div>
       </div>
+      </FeaturesMotion>
     </section>
   );
 }
